@@ -11,7 +11,7 @@ ScaleEstimator::~ScaleEstimator()
 }
 
 
-bool ScaleEstimator::UpdateMotion(MotionState* _ptrCurMotion) {
+bool ScaleEstimator::updateMotion(MotionState* _ptrCurMotion) {
 
 	ptrMotion[0] = _ptrCurMotion;
 
@@ -23,7 +23,7 @@ bool ScaleEstimator::UpdateMotion(MotionState* _ptrCurMotion) {
 	return !!ptrMotion[0];
 }
 
-int ScaleEstimator::GetPairPoints2() {
+int ScaleEstimator::getPairPoints2() {
 	bool _isLogData = false;
 	bool _isUpdateData = true;
 
@@ -106,7 +106,7 @@ int ScaleEstimator::GetPairPoints2() {
 //	return pair3Cnt;
 //}
 
-double ScaleEstimator::CalcScaleRatio(cv::Mat matDir, int flag) {
+double ScaleEstimator::calcScaleRatio(int flag) {
 	double retScale=0.0f;
 	int sizePoint = matIntersection.cols;
 	std::function<bool(const cv::Point3d&, const cv::Point3d&)> sortY =
@@ -152,92 +152,92 @@ double ScaleEstimator::CalcScaleRatio(cv::Mat matDir, int flag) {
 			}
 		}
 	}
-	else {
-		//换一种，先按照y排序，然后三个三个 算平面，选择比较平的那些平面.
-		// 三个点算 法向量 ，y轴取负
-		//考虑当前的 matDir,选择与其 点乘 的double作为 map.first
-		// 按照 map< double点乘 方向, vec<Point>> 存储 
-		//map从小到大排序，计算 点到平面距离，依次验证容忍度，
-		// 还要加入对跳帧的容忍范围,单帧容忍 1.65/x 后的 0.2, 多帧 0.2+0.1*(n-1)
-		std::vector<cv::Point3d> vecPoints;
-		
-		for (int idxPoint = 0; idxPoint < sizePoint; idxPoint++) {
-			cv::Point3d vecTmp((cv::Vec<double, 3>)matIntersection.col(idxPoint));
-			if (vecTmp.y > 0)
-				vecPoints.push_back(vecTmp);
-		}
-		sizePoint = vecPoints.size();
-		//排序y轴
-		
+	//else {
+	//	//换一种，先按照y排序，然后三个三个 算平面，选择比较平的那些平面.
+	//	// 三个点算 法向量 ，y轴取负
+	//	//考虑当前的 matDir,选择与其 点乘 的double作为 map.first
+	//	// 按照 map< double点乘 方向, vec<Point>> 存储 
+	//	//map从小到大排序，计算 点到平面距离，依次验证容忍度，
+	//	// 还要加入对跳帧的容忍范围,单帧容忍 1.65/x 后的 0.2, 多帧 0.2+0.1*(n-1)
+	//	std::vector<cv::Point3d> vecPoints;
+	//	
+	//	for (int idxPoint = 0; idxPoint < sizePoint; idxPoint++) {
+	//		cv::Point3d vecTmp((cv::Vec<double, 3>)matIntersection.col(idxPoint));
+	//		if (vecTmp.y > 0)
+	//			vecPoints.push_back(vecTmp);
+	//	}
+	//	sizePoint = vecPoints.size();
+	//	//排序y轴
+	//	
 
-		std::sort(vecPoints.begin(), vecPoints.end(), sortY);
+	//	std::sort(vecPoints.begin(), vecPoints.end(), sortY);
 
-		//printf("=====输出所有点=====\n");
-		//for (auto&p : vecPoints) std::cout << p << std::endl;
+	//	//printf("=====输出所有点=====\n");
+	//	//for (auto&p : vecPoints) std::cout << p << std::endl;
 
 
-		cv::Point3d pointDir((cv::Vec<double, 3>)matDir);
-		std::map<double, double> mapDotDist;
-		//std::map<double, std::vector<cv::Point3d>> mapDotPoint;
+	//	cv::Point3d pointDir((cv::Vec<double, 3>)matDir);
+	//	std::map<double, double> mapDotDist;
+	//	//std::map<double, std::vector<cv::Point3d>> mapDotPoint;
 
-		//计算点乘结果, 并插入map
-		//std::deque<cv::Point3d> cachePoint;
-		for (int idxPoint = 0; idxPoint < sizePoint - 2; idxPoint++) {
-			cv::Point3d normal = (vecPoints[idxPoint] - vecPoints[idxPoint + 1]).cross(vecPoints[idxPoint] - vecPoints[idxPoint+2]);
-			//法向量取负
-			normal = normal.y < 0.0f ? -normal : normal;
-			normal.x /= cv::norm(normal);
-			normal.y /= cv::norm(normal);
-			normal.z /= cv::norm(normal);
+	//	//计算点乘结果, 并插入map
+	//	//std::deque<cv::Point3d> cachePoint;
+	//	for (int idxPoint = 0; idxPoint < sizePoint - 2; idxPoint++) {
+	//		cv::Point3d normal = (vecPoints[idxPoint] - vecPoints[idxPoint + 1]).cross(vecPoints[idxPoint] - vecPoints[idxPoint+2]);
+	//		//法向量取负
+	//		normal = normal.y < 0.0f ? -normal : normal;
+	//		normal.x /= cv::norm(normal);
+	//		normal.y /= cv::norm(normal);
+	//		normal.z /= cv::norm(normal);
 
-			//printf("点%d-%d-%d\n法向量\n", idxPoint, idxPoint + 1, idxPoint + 2);
-			//std::cout << normal << std::endl;
+	//		//printf("点%d-%d-%d\n法向量\n", idxPoint, idxPoint + 1, idxPoint + 2);
+	//		//std::cout << normal << std::endl;
 
-			double dotResult = normal.dot(pointDir);
-			double dist = vecPoints[idxPoint].dot(normal);
+	//		double dotResult = normal.dot(pointDir);
+	//		double dist = vecPoints[idxPoint].dot(normal);
 
-			mapDotDist.insert(std::make_pair(dist, dotResult));
-			//printf("dist=%f, dot=%f\n", dist, dotResult);
+	//		mapDotDist.insert(std::make_pair(dist, dotResult));
+	//		//printf("dist=%f, dot=%f\n", dist, dotResult);
 
-			//vecTmp.push
-			/*while (cachePoint.size() >= 3){
-				cachePoint.pop_front();
-			}
-			while (cachePoint.size() < 3){
-				cachePoint.push_back(vecPoints[idxPoint + cachePoint.size()]);
-			}
-			mapDotPoint.insert(std::make_pair(dotResult, std::vector<cv::Point3d>(cachePoint.begin(), cachePoint.end())));*/
-		}
+	//		//vecTmp.push
+	//		/*while (cachePoint.size() >= 3){
+	//			cachePoint.pop_front();
+	//		}
+	//		while (cachePoint.size() < 3){
+	//			cachePoint.push_back(vecPoints[idxPoint + cachePoint.size()]);
+	//		}
+	//		mapDotPoint.insert(std::make_pair(dotResult, std::vector<cv::Point3d>(cachePoint.begin(), cachePoint.end())));*/
+	//	}
 
-		//map从大到小
-		printf("Map 遍历\n");
-		for (auto riter = mapDotDist.rbegin(); riter != mapDotDist.rend(); riter++) {
-			double dist = riter->first,
-				dot = riter->second;
-			//printf("dist=%f, dot=%f\n", dist, dot);
-			if (std::abs(dot) <  1 - std::cos(acos(-1) / 180.0f*5.0f)) {
-				retScale = dist;
-				return retScale;
-			}
-		}
-		for (auto riter = mapDotDist.rbegin(); riter != mapDotDist.rend(); riter++) {
-			double dist = riter->first,
-				dot = riter->second;
-			//printf("dist=%f, dot=%f\n", dist, dot);
-			if (std::abs(dot) < 1 - std::cos(acos(-1) / 180.0f*10.0f)) {
-				retScale = dist;
-				break;
-			}
-		}
+	//	//map从大到小
+	//	printf("Map 遍历\n");
+	//	for (auto riter = mapDotDist.rbegin(); riter != mapDotDist.rend(); riter++) {
+	//		double dist = riter->first,
+	//			dot = riter->second;
+	//		//printf("dist=%f, dot=%f\n", dist, dot);
+	//		if (std::abs(dot) <  1 - std::cos(acos(-1) / 180.0f*5.0f)) {
+	//			retScale = dist;
+	//			return retScale;
+	//		}
+	//	}
+	//	for (auto riter = mapDotDist.rbegin(); riter != mapDotDist.rend(); riter++) {
+	//		double dist = riter->first,
+	//			dot = riter->second;
+	//		//printf("dist=%f, dot=%f\n", dist, dot);
+	//		if (std::abs(dot) < 1 - std::cos(acos(-1) / 180.0f*10.0f)) {
+	//			retScale = dist;
+	//			break;
+	//		}
+	//	}
 
-	}
+	//}
 
 
 	return retScale;
 
 }
 
-double ScaleEstimator::ComputeScaleTransform(double preTransScale) {
+double ScaleEstimator::computeScaleTransform() {
 	bool _isLogData = true ;
 	bool _isWriteInfomation = false;
 	
@@ -249,17 +249,17 @@ double ScaleEstimator::ComputeScaleTransform(double preTransScale) {
 	if (pair2Cnt < 10) return 0;
 
 	//////////////////////////////////////////////////////////////////////////
-	GetPairPoints2();
+	getPairPoints2();
 	cv::Mat transMask;
-	transMask = TransformIn2Coord(pair2Cnt, 0,1);
+	transMask = transformIn2Coord(pair2Cnt, 0,1);
 
-	double retScale = CalcScaleRatio(ptrMotion[0]->matDir, 0);
+	double retScale = calcScaleRatio(0);
 
 	// 1.65/scale 变化量修正（速度变化修正）
-	double ScaleDelta = 1.65 / retScale - 1.65 / preTransScale;
-	if (preTransScale > 0 && retScale > 0 && std::abs(ScaleDelta) > CFG_ScaleInvIncreaseDiffLimit) {
-		retScale = 1.65 / (1.65 / preTransScale + CFG_ScaleInvIncreaseDiffLimit*(ScaleDelta > 0 ? 1.0f : -1.0f));
-	}
+	//double ScaleDelta = 1.65 / retScale - 1.65 / preTransScale;
+	//if (preTransScale > 0 && retScale > 0 && std::abs(ScaleDelta) > CFG_dScaleInvIncreaseDiffLimit) {
+	//	retScale = 1.65 / (1.65 / preTransScale + CFG_ScaleInvIncreaseDiffLimit*(ScaleDelta > 0 ? 1.0f : -1.0f));
+	//}
 
 	if (_isWriteInfomation) {
 
@@ -281,7 +281,7 @@ double ScaleEstimator::ComputeScaleTransform(double preTransScale) {
 	return retScale;
 }
 
-double ScaleEstimator::CalcLineIntersection(cv::Mat d1, cv::Mat d2, cv::Mat p2, cv::Mat& ip1) {
+double ScaleEstimator::calcLineIntersection(cv::Mat d1, cv::Mat d2, cv::Mat p2, cv::Mat& ip1) {
 	cv::Mat p1(3, 1, CV_64FC1);	p1 = 0.0f;
 	cv::Mat ret(3, 1, CV_64FC1);
 	double t = 0.0f;
@@ -295,7 +295,7 @@ double ScaleEstimator::CalcLineIntersection(cv::Mat d1, cv::Mat d2, cv::Mat p2, 
 }
 
 
-cv::Mat ScaleEstimator::TransformIn2Coord(int pntNum, int preIdx, int curIdx) {
+cv::Mat ScaleEstimator::transformIn2Coord(int pntNum, int preIdx, int curIdx) {
 	bool _isLogData = false;
  
 	// 对 0,1坐标系 计算点的三维位置
@@ -328,7 +328,7 @@ cv::Mat ScaleEstimator::TransformIn2Coord(int pntNum, int preIdx, int curIdx) {
 	distMask = 0;
 	for (int idxPnt = 0; idxPnt < pntNum; idxPnt++) {
 
-		double dist = CalcLineIntersection(
+		double dist = calcLineIntersection(
 			matDirXYZ[preIdx].col(idxPnt),
 			matDirXYZ[curIdx].col(idxPnt),
 			matPosOrign[curIdx],

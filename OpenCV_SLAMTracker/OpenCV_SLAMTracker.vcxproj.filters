@@ -39,6 +39,18 @@
     <ClInclude Include="inc\Constant.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="inc\PoseState.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\FeatureState.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\FrameParser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\ScaleEstimator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Config.cpp">
@@ -63,6 +75,18 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\Constant.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PoseState.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FeatureState.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FrameParser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ScaleEstimator.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

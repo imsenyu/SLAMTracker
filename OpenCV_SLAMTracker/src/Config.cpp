@@ -19,3 +19,4 @@ double CFG_dScaleRatioLimitTop;// = 11.0f;
 double CFG_dScaleRatioErrorDefault; // = 0.1f;
 double CFG_dRotationDiffLimit; // = 15.0f;
 double CFG_dScaleInvIncreaseDiffLimit; // = 0.1f;
+cv::Mat CFG_mCameraParameter;

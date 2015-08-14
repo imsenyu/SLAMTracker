@@ -2,7 +2,7 @@
 #define CANVASDRAWER_H_INCLUDED
 
 #include "stdafx.h"
-
+#include "PoseState.h"
 /**
 * \class CanvasDrawer
 * \brief 用于绘制轨迹画布
@@ -33,7 +33,8 @@ public:
 public:
 	bool setLogPath(const std::string& recordFilePath = "");
 	void initAnimate();
-	void drawAnimate(cv::Mat matR, cv::Mat matT, int preImgIdx, int curImgIdx, double velocityScale);
+	void drawCanvas(PoseState& curPstate);
+	//void drawAnimate(cv::Mat matR, cv::Mat matT, int preImgIdx, int curImgIdx, double velocityScale);
 	bool useGroundTruth(const std::string groundTruthPath = "");
 private:
 	double drawGroundTruth(cv::Mat& canvas,int iterCnt = 1);

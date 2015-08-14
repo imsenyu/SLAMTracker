@@ -2,14 +2,14 @@
 #include "Utils.h"
 std::map<std::string, double> mapTBegin;
 
-double Utils::getRodriguesRotation(cv::Mat rtDir, cv::Mat& matRotation, double ratio) {
+double Utils::getRodriguesRotation(cv::Mat _rtDir, cv::Mat& matRotation, double ratio) {
 	//使用 叉乘求出 旋转轴[1*3]，然后 用 cos(theta) = P·Q / |P|*|Q| 求出theta弧度作为旋转轴向量的 normest
 	//带入函数 算出旋转矩阵，然后再说
 	//
 	bool _isLogData = false;
 
-	double arrUnitVector[] = { 0, 0, 1 };
-	cv::Mat matUnitVector(3, 1, CV_64FC1, arrUnitVector);
+	cv::Mat matUnitVector = Const::mat31_001.clone();
+	cv::Mat rtDir = _rtDir / cv::norm(_rtDir);
 
 	if (_isLogData)std::cout << matUnitVector << std::endl;
 
@@ -75,6 +75,8 @@ bool Utils::loadCommandLine(int argc, char* argv[]) {
 	CFG_dRotationDiffLimit		= Utils::configDefault<double>(15.0f, fs["dRotationDiffLimit"]);
 	CFG_bIsLimitRotationDiff	= Utils::configDefault<int>(0, fs["bIsLimitRotationDiff"]);
 	CFG_dScaleInvIncreaseDiffLimit = Utils::configDefault<double>(0.1f, fs["dScaleInvIncreaseDiffLimit"]);
+	CFG_mCameraParameter		= Utils::configDefault<cv::Mat>(Const::mat33_111.clone(), fs["mCameraParameter"]);
+
 
 	fs.release();
 	fs.open(userDefinedCfg, cv::FileStorage::WRITE);
@@ -97,7 +99,7 @@ bool Utils::loadCommandLine(int argc, char* argv[]) {
 	fs << "bIsLimitRotationDiff"	<< CFG_bIsLimitRotationDiff;
 	fs << "bIsUseGroundTruthDistance" << CFG_bIsUseGroundTruthDistance;
 	fs << "dScaleInvIncreaseDiffLimit" << CFG_dScaleInvIncreaseDiffLimit;
-
+	fs << "mCameraParameter"		<< CFG_mCameraParameter;
 	fs.release();
 
 	return true;

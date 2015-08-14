@@ -57,8 +57,11 @@ namespace Utils {
 	_Type configDefault(_Type defaultVal, cv::FileNode& fn) {
 		if (fn.empty() == true)
 			return defaultVal;
-		else
-			return (_Type)(fn);
+		else {
+			_Type ret;
+			fn >> ret;
+			return ret;
+		}
 	}
 };
 

@@ -1,5 +1,5 @@
 #include "CanvasDrawer.h"
-
+#include "PoseState.h"
 
 CanvasDrawer::CanvasDrawer() :avaliable(false)
 {
@@ -33,7 +33,7 @@ double CanvasDrawer::drawGroundTruth(cv::Mat& canvas, int iterCnt ) {
 	}
 
 	cv::Point3d curPoint;
-	static double arrPose[12];
+	double arrPose[12];
 	for (int cnt = 0; cnt < iterCnt; cnt++) {
 		cntGroundTruth++;
 		for (int idx = 0; idx < 12; idx++)
@@ -107,112 +107,116 @@ void CanvasDrawer::initAnimate() {
 }
 
 
+void CanvasDrawer::drawCanvas(PoseState& curPstate){
 
 
-void CanvasDrawer::drawAnimate(cv::Mat matR, cv::Mat matT, int preImgIdx, int curImgIdx, double transformScale) {
-	if (avaliable == false) {
-		initAnimate();
-	}
 
-	bool _isNotConsiderAxisY = CFG_bIsNotConsiderAxisY;
-
-	cv::Point3d prePointPos = gPointPos;
-
-	//Point3 转  Mat(3,1)
-	double arrLocalPos[] = { gPointPos.x, gPointPos.y, gPointPos.z };
-	double arrLocalDir[] = { gPointDir.x, gPointDir.y, gPointDir.z };
-	cv::Mat matLocalPos(3, 1, CV_64FC1, arrLocalPos),
-		matLocalDir(3, 1, CV_64FC1, arrLocalDir);
-
-	cv::Mat matTmpRotate;
-	Utils::getRodriguesRotation(matLocalDir, matTmpRotate);
-	printf("==============Old Direction==============\n");
-	std::cout << matLocalDir << std::endl;
-	cv::Scalar color;
-	if (transformScale > std::abs(CFG_dScaleRatioLimitBottom) && transformScale < std::abs(CFG_dScaleRatioLimitTop)) {
-		transNorm = 1.65f / transformScale;
-		color = cv::Scalar(-1);
-	}
-	else if (transformScale == -1.0f) {
-		transNorm = 1.0f;
-		color = cv::Scalar(-1);
-	}
-	else {
-		transNorm = CFG_dScaleRatioErrorDefault;
-		color = cv::Scalar(0,0,255);
-	}
-
-
-	// 画标准解
-	double distGroundTruth = drawGroundTruth(matCanvas, curImgIdx - preImgIdx);
-	if ( CFG_bIsUseGroundTruthDistance) {
-		transNorm = distGroundTruth;
-	}
-
-	//Transform Matrix 生效，平移变换
-	matLocalPos = matLocalPos + matTmpRotate * matT * CFG_dDrawFrameStep*transNorm;
-
-	gPointPos = cv::Point3d((cv::Vec<double, 3>)matLocalPos);
-
-	//记录坐标 平移矩阵
-	if (fileTraceRecord.is_open()) {
-		double degT = Utils::getRodriguesRotation(matT, cv::Mat());
-		double arrOne[] = { 0, 0, 1 };
-		cv::Mat matOne(3, 1, CV_64FC1, arrOne);
-		matOne = matR*matOne;
-		double degR = Utils::getRodriguesRotation(matOne, cv::Mat());
-		fileTraceRecord.sync_with_stdio(false);
-		fileTraceRecord << curImgIdx << " " << gPointPos.x << " " << gPointPos.z << " " << gPointPos.y << " " << degT << " " << transformScale << degR << std::endl;
-	}
-
-	//图上绘制新坐标点，和移动线路
-	cv::circle(matCanvas, gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z), transNorm == CFG_dScaleRatioErrorDefault ? 3 : 1, color);// cv::Scalar(-1));
-	//cv::line(matCanvas, gPointBase + cv::Point2f(prePointPos.x, -prePointPos.z), gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z), cv::Scalar(-1));
-
-
-	double arrVector001[] = { 0, 0, 1 };
-	cv::Mat matUnitVector001(3, 1, CV_64FC1, arrVector001);
-	cv::Mat matTmpDir(3, 1, CV_64FC1);
-	cv::Point3d pointTmpDir[2];
-
-	cv::Mat matCorrectRotXZ(3, 1, CV_64FC1),
-		matCorrectRotation(3, 3, CV_64FC1),
-		matCorrectDir(3, 1, CV_64FC1);
-
-	for (int i = 0; i < 1; i++) {
-		//try two matR;
-
-		matTmpDir.at<double>(0, 0) = gPointDir.x;
-		matTmpDir.at<double>(1, 0) = gPointDir.y;
-		matTmpDir.at<double>(2, 0) = gPointDir.z;
-
-		if (_isNotConsiderAxisY) {
-			//只考虑 XZ平面旋转
-			matCorrectRotXZ = matR * matUnitVector001;
-
-			matCorrectRotXZ.at<double>(1, 0) = 0.0f;
-			matCorrectRotXZ = matCorrectRotXZ / cv::norm(matCorrectRotXZ);
-			Utils::getRodriguesRotation(matCorrectRotXZ, matCorrectRotation);
-			matCorrectDir = matCorrectRotation* matLocalDir;
-			//Trick
-			matCorrectDir.at<double>(1, 0) = 0.0f;
-			matTmpDir = matCorrectDir / cv::norm(matCorrectDir);
-		}
-		else {
-			matTmpDir = matR * matLocalDir;
-		}
-
-		pointTmpDir[i] = cv::Point3d((cv::Vec<double, 3>)matTmpDir);
-
-		printf("==============New Direction==============\n");
-		std::cout << pointTmpDir[i] << std::endl;
-
-	}
-
-	gPointDir = pointTmpDir[0];
-
-	cv::Mat matTmpCanvas = matCanvas.clone();
-	cv::line(matTmpCanvas, gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z), gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z) + 20.0f*cv::Point2f(gPointDir.x, -gPointDir.z), cv::Scalar(255, 0, 0));
-	cv::imshow("canvas", matTmpCanvas);
-	cv::waitKey(1);
 }
+
+//void CanvasDrawer::drawAnimate(cv::Mat matR, cv::Mat matT, int preImgIdx, int curImgIdx, double transformScale) {
+//	if (avaliable == false) {
+//		initAnimate();
+//	}
+//
+//	bool _isNotConsiderAxisY = CFG_bIsNotConsiderAxisY;
+//
+//	cv::Point3d prePointPos = gPointPos;
+//
+//	//Point3 转  Mat(3,1)
+//	double arrLocalPos[] = { gPointPos.x, gPointPos.y, gPointPos.z };
+//	double arrLocalDir[] = { gPointDir.x, gPointDir.y, gPointDir.z };
+//	cv::Mat matLocalPos(3, 1, CV_64FC1, arrLocalPos),
+//		matLocalDir(3, 1, CV_64FC1, arrLocalDir);
+//
+//	cv::Mat matTmpRotate;
+//	Utils::getRodriguesRotation(matLocalDir, matTmpRotate);
+//	printf("==============Old Direction==============\n");
+//	std::cout << matLocalDir << std::endl;
+//	cv::Scalar color;
+//	if (transformScale > std::abs(CFG_dScaleRatioLimitBottom) && transformScale < std::abs(CFG_dScaleRatioLimitTop)) {
+//		transNorm = 1.65f / transformScale;
+//		color = cv::Scalar(-1);
+//	}
+//	else if (transformScale == -1.0f) {
+//		transNorm = 1.0f;
+//		color = cv::Scalar(-1);
+//	}
+//	else {
+//		transNorm = CFG_dScaleRatioErrorDefault;
+//		color = cv::Scalar(0,0,255);
+//	}
+//
+//
+//	// 画标准解
+//	double distGroundTruth = drawGroundTruth(matCanvas, curImgIdx - preImgIdx);
+//	if ( CFG_bIsUseGroundTruthDistance) {
+//		transNorm = distGroundTruth;
+//	}
+//
+//	//Transform Matrix 生效，平移变换
+//	matLocalPos = matLocalPos + matTmpRotate * matT * CFG_dDrawFrameStep*transNorm;
+//
+//	gPointPos = cv::Point3d((cv::Vec<double, 3>)matLocalPos);
+//
+//	//记录坐标 平移矩阵
+//	if (fileTraceRecord.is_open()) {
+//		double degT = Utils::getRodriguesRotation(matT, cv::Mat());
+//		double arrOne[] = { 0, 0, 1 };
+//		cv::Mat matOne(3, 1, CV_64FC1, arrOne);
+//		matOne = matR*matOne;
+//		double degR = Utils::getRodriguesRotation(matOne, cv::Mat());
+//		fileTraceRecord.sync_with_stdio(false);
+//		fileTraceRecord << curImgIdx << " " << gPointPos.x << " " << gPointPos.z << " " << gPointPos.y << " " << degT << " " << transformScale << degR << std::endl;
+//	}
+//
+//	//图上绘制新坐标点，和移动线路
+//	cv::circle(matCanvas, gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z), transNorm == CFG_dScaleRatioErrorDefault ? 3 : 1, color);// cv::Scalar(-1));
+//	//cv::line(matCanvas, gPointBase + cv::Point2f(prePointPos.x, -prePointPos.z), gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z), cv::Scalar(-1));
+//
+//
+//	double arrVector001[] = { 0, 0, 1 };
+//	cv::Mat matUnitVector001(3, 1, CV_64FC1, arrVector001);
+//	cv::Mat matTmpDir(3, 1, CV_64FC1);
+//	cv::Point3d pointTmpDir[2];
+//
+//	cv::Mat matCorrectRotXZ(3, 1, CV_64FC1),
+//		matCorrectRotation(3, 3, CV_64FC1),
+//		matCorrectDir(3, 1, CV_64FC1);
+//
+//	for (int i = 0; i < 1; i++) {
+//		//try two matR;
+//
+//		matTmpDir.at<double>(0, 0) = gPointDir.x;
+//		matTmpDir.at<double>(1, 0) = gPointDir.y;
+//		matTmpDir.at<double>(2, 0) = gPointDir.z;
+//
+//		if (_isNotConsiderAxisY) {
+//			//只考虑 XZ平面旋转
+//			matCorrectRotXZ = matR * matUnitVector001;
+//
+//			matCorrectRotXZ.at<double>(1, 0) = 0.0f;
+//			matCorrectRotXZ = matCorrectRotXZ / cv::norm(matCorrectRotXZ);
+//			Utils::getRodriguesRotation(matCorrectRotXZ, matCorrectRotation);
+//			matCorrectDir = matCorrectRotation* matLocalDir;
+//			//Trick
+//			matCorrectDir.at<double>(1, 0) = 0.0f;
+//			matTmpDir = matCorrectDir / cv::norm(matCorrectDir);
+//		}
+//		else {
+//			matTmpDir = matR * matLocalDir;
+//		}
+//
+//		pointTmpDir[i] = cv::Point3d((cv::Vec<double, 3>)matTmpDir);
+//
+//		printf("==============New Direction==============\n");
+//		std::cout << pointTmpDir[i] << std::endl;
+//
+//	}
+//
+//	gPointDir = pointTmpDir[0];
+//
+//	cv::Mat matTmpCanvas = matCanvas.clone();
+//	cv::line(matTmpCanvas, gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z), gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z) + 20.0f*cv::Point2f(gPointDir.x, -gPointDir.z), cv::Scalar(255, 0, 0));
+//	cv::imshow("canvas", matTmpCanvas);
+//	cv::waitKey(1);
+//}

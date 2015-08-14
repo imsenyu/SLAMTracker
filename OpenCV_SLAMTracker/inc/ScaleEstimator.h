@@ -17,24 +17,24 @@ private:
 	cv::Mat matIntersection;
 public:
 	// 更新数据
-	bool UpdateMotion(MotionState* ptrCurMotion);
+	bool updateMotion(MotionState* ptrCurMotion);
 
 	//////////////////////////////////////////////////////////////////////////
 	// 已废弃，速度跑飞了
-	double ComputeScaleTransform(double preTransScale);
+	double computeScaleTransform();
 
 	//double ComputeScale();
 
 private:
-	double CalcScaleRatio(cv::Mat matDir, int flag = 0);
+	double calcScaleRatio(int flag = 0);
 
 	//int GetPairPoints3(int cols = 0);
 
-	int GetPairPoints2();
+	int getPairPoints2();
 
-	double CalcLineIntersection(cv::Mat d1, cv::Mat d2, cv::Mat p2, cv::Mat& ip1);
+	double calcLineIntersection(cv::Mat d1, cv::Mat d2, cv::Mat p2, cv::Mat& ip1);
 
-	cv::Mat ScaleEstimator::TransformIn2Coord(int pntNum, int preIdx = 0, int curIdx = 1);
+	cv::Mat transformIn2Coord(int pntNum, int preIdx = 0, int curIdx = 1);
 };
 
 #endif

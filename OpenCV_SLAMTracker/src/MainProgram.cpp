@@ -9,12 +9,15 @@ int main(int argc, char* argv[]) {
 
 	// 工作模式配置为 执行轨迹跟踪
 	if (CFG_sModeExecute == "track") {
-		TrackRunner runner;
+		TrackRunner runner(CFG_iImageLoadBegin, CFG_iImageLoadEnd);
 
 		runner.initFirstFrame();
 
-		for (int idxImg = CFG_iImageLoadBegin; idxImg <= CFG_iImageLoadEnd; idxImg++) {
-			runner.runKeyStep(idxImg);
+		while (true) {
+
+			int idxImgCur = runner.runKeyStep();
+			if (idxImgCur > CFG_iImageLoadEnd) break;
+
 			runner.showFrameMotion();
 			runner.showTrack();
 		}

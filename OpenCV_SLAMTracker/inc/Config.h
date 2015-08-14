@@ -26,6 +26,6 @@ extern double CFG_dScaleRatioLimitTop; /** \var double:尺度变换限制上界 */
 extern double CFG_dScaleRatioErrorDefault; /** \var double:尺度变换异常的默认位移模长 */
 extern double CFG_dRotationDiffLimit; /** \var double:位移旋转角度增量限制值(degree) */
 extern double CFG_dScaleInvIncreaseDiffLimit; /** \var double:位移(尺度倒数)增量限制 */
-
+extern cv::Mat CFG_mCameraParameter; /** \var 相机内参数矩阵 */
 
 #endif

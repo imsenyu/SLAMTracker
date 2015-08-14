@@ -3,21 +3,27 @@
 
 #include "stdafx.h"
 
+/**
+ *	\class FeatureState
+ *	\brief 每一帧特征数据, 建议new和delete来存储
+ */
 class FeatureState
 {
 public:
-	FeatureState();
+	FeatureState(int _ImgIdx = -1);
 	~FeatureState();
 public:
 	//当前特征数据的图像编号
+	bool inited;
 	int idxImg;
 	std::vector<cv::KeyPoint> vecKeyPoints;
 	std::vector<cv::Point2f> vecFeaturePoints;
-	//不用写右值，直接拷贝即可
+	cv::Mat matImage;
 	cv::Mat matDescriptor;
 
-	void SetState(std::vector<cv::KeyPoint>& _vecKeyPoints, std::vector<cv::Point2f>& _vecFeaturePoints, cv::Mat& _matDescriptor);
-	void GetState(std::vector<cv::KeyPoint>& _vecKeyPoints, std::vector<cv::Point2f>& _vecFeaturePoints, cv::Mat& _matDescriptor) const;
+	bool loadImage(int _ImgIdx);
+	//void SetState(std::vector<cv::KeyPoint>& _vecKeyPoints, std::vector<cv::Point2f>& _vecFeaturePoints, cv::Mat& _matDescriptor);
+	//void GetState(std::vector<cv::KeyPoint>& _vecKeyPoints, std::vector<cv::Point2f>& _vecFeaturePoints, cv::Mat& _matDescriptor) const;
 };
 
 #endif

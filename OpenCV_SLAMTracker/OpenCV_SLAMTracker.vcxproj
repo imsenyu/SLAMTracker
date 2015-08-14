@@ -189,8 +189,12 @@
     <ClInclude Include="inc\CanvasDrawer.h" />
     <ClInclude Include="inc\Config.h" />
     <ClInclude Include="inc\Constant.h" />
+    <ClInclude Include="inc\FeatureState.h" />
+    <ClInclude Include="inc\FrameParser.h" />
     <ClInclude Include="inc\MotionState.h" />
     <ClInclude Include="inc\PoseHelper.h" />
+    <ClInclude Include="inc\PoseState.h" />
+    <ClInclude Include="inc\ScaleEstimator.h" />
     <ClInclude Include="inc\stdafx.h" />
     <ClInclude Include="inc\TrackRunner.h" />
     <ClInclude Include="inc\Utils.h" />
@@ -199,9 +203,13 @@
     <ClCompile Include="src\CanvasDrawer.cpp" />
     <ClCompile Include="src\Config.cpp" />
     <ClCompile Include="src\Constant.cpp" />
+    <ClCompile Include="src\FeatureState.cpp" />
+    <ClCompile Include="src\FrameParser.cpp" />
     <ClCompile Include="src\MainProgram.cpp" />
     <ClCompile Include="src\MotionState.cpp" />
     <ClCompile Include="src\PoseHelper.cpp" />
+    <ClCompile Include="src\PoseState.cpp" />
+    <ClCompile Include="src\ScaleEstimator.cpp" />
     <ClCompile Include="src\TrackRunner.cpp" />
     <ClCompile Include="src\Utils.cpp" />
   </ItemGroup>
