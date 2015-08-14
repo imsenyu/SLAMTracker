@@ -1,0 +1,13 @@
+*.sdf
+*.ilk
+*.pdb
+*.idb
+*.opensdf
+*.log
+*.obj
+*.tlog
+*.png
+Features
+Features/
+Velocity
+Velocity/
