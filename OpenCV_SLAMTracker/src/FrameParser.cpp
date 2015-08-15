@@ -20,34 +20,10 @@ void FrameParser::InitData(int idx0, int idx1) {
 
 }
 
-FrameParser::FrameParser(const std::string imagePath[2],int idx0, int idx1)
-{
-	InitData(idx0,idx1);
-	for (int idxImg = 0; idxImg < 2; idxImg++)
-		matOrignImage[idxImg] = cv::imread(imagePath[idxImg], cv::IMREAD_COLOR);
-}
 
-
-FrameParser::FrameParser(const cv::Mat image[2], int idx0, int idx1){
-	InitData(idx0, idx1);
-	std::cout << "const Constructor" << std::endl;
-	for (int idxImg = 0; idxImg < 2; idxImg++)
-		matOrignImage[idxImg] = image[idxImg].clone();
-	isInitedByCloneImage = true;
-}
-
-FrameParser::FrameParser(cv::Mat image[2], int idx0, int idx1) {
-	InitData(idx0, idx1);
-	std::cout << "no-const Constructor" << std::endl;
-	for (int idxImg = 0; idxImg < 2; idxImg++)
-		matOrignImage[idxImg] = image[idxImg];
-
-}
 
 FrameParser::~FrameParser() {
-	if (isInitedByCloneImage)
-	for (int idxImg = 0; idxImg < 2; idxImg++) 
-		matOrignImage[idxImg].release();
+	
 }
 
 int FrameParser::detectExtractFeatures(int nFeatures, FeatureState& fState) {
@@ -218,6 +194,10 @@ void FrameParser::validPointsByOpticalFlow(double threshold) {
 	std::vector<float> vecOpticalErr; 
 
 	if (_isTimeProfile) TIME_BEGIN("optical-flow");
+	printf("%d %d %d %d\n", matOrignImage[0].rows,
+		matOrignImage[1].rows,
+		vecPairPoint[0].size(), vecPairPoint[1].size());
+
 	cv::calcOpticalFlowPyrLK(
 		matOrignImage[0], matOrignImage[1], 
 		vecPairPoint[0], vecOpticalFound, 
@@ -620,7 +600,7 @@ FrameParser::FrameParser(FeatureState* prePtr, FeatureState* curPtr) {
 
 	preImgIdx = prePtr->idxImg;
 	curImgIdx = curPtr->idxImg;
-	printf("pre:%d cur:%d\n", preImgIdx, curImgIdx);
+	
 	std::vector<FeatureState*> vecPtr(2);
 	vecPtr[0] = prePtr;
 	vecPtr[1] = curPtr;
@@ -631,5 +611,9 @@ FrameParser::FrameParser(FeatureState* prePtr, FeatureState* curPtr) {
 		matDescriptor[idx] = vecPtr[idx]->matDescriptor;
 		matOrignImage[idx] = vecPtr[idx]->matImage;
 	}
+
+	printf("======== FrameParser ========\n");
+	printf("Pre:%d Cur:%d\n", preImgIdx, curImgIdx);
+	printf("matImg[0]:%d; matImg[1]:%d\n", matOrignImage[0].rows, matOrignImage[1].rows);
 
 }

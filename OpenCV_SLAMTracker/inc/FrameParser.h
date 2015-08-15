@@ -29,9 +29,7 @@ public:
 	int preImgIdx;
 	int curImgIdx;
 public:
-	FrameParser(const std::string imagePath[2], int idx0, int idx1);
-	FrameParser(const cv::Mat image[2], int idx0, int idx1);
-	FrameParser(cv::Mat image[2], int idx0, int idx1);
+
 	FrameParser(FeatureState* prePtr, FeatureState* curPtr);
 	~FrameParser();
 

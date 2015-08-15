@@ -131,3 +131,11 @@ std::string Utils::getTimeNow(std::string format) {
 
 	return std::string(timeBuf);
 }
+
+cv::Point3d Utils::transform(cv::Mat& mat31) {
+	cv::Point3d ret;
+	ret.x = mat31.at<double>(0, 0);
+	ret.y = mat31.at<double>(1, 0);
+	ret.z = mat31.at<double>(2, 0);
+	return ret;
+}

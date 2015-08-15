@@ -40,6 +40,9 @@ namespace Utils {
 	/** \fn 根据 \var format 参数输出当前时间 */
 	std::string getTimeNow(std::string format = "%Y_%m_%d_%H_%M");
 
+	/** \fn cv::Mat(3,1,CV_F64C1) to cv::Point3d */
+	cv::Point3d transform(cv::Mat& mat31);
+
 	template<class _Type>
 	class PointComp {
 	public:

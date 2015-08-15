@@ -12,13 +12,17 @@ PoseState::~PoseState()
 {
 }
 
-PoseState PoseState::Move(const MotionState& motion) {
+PoseState PoseState::move(const MotionState& motion) {
 	PoseState retPose(motion.idxImg[1]);
 
-	double arrLocalPos[] = { pointPos.x, pointPos.y, pointPos.z };
-	double arrLocalDir[] = { pointPos.x, pointPos.y, pointPos.z };
+	double arrLocalPos[] = { pos.x, pos.y, pos.z };
+	double arrLocalDir[] = { dir.x, dir.y, dir.z };
 	cv::Mat matLocalPos(3, 1, CV_64FC1, arrLocalPos),
 			matLocalDir(3, 1, CV_64FC1, arrLocalDir);
+
+
+	std::cout << matLocalDir << std::endl;
+	std::cout << matLocalPos << std::endl;
 
 	cv::Mat matTmpRotate;
 	Utils::getRodriguesRotation(matLocalDir, matTmpRotate);
@@ -44,10 +48,20 @@ PoseState PoseState::Move(const MotionState& motion) {
 		matLocalDir = motion.matR * matLocalDir;
 	}
 
+	std::cout << matLocalDir << std::endl;
+	std::cout << matLocalPos << std::endl;
+
 	retPose.idxImg = motion.idxImg[1];
-	retPose.pointDir = cv::Point3d((cv::Vec<double, 3>)matLocalDir);
-	retPose.pointPos = cv::Point3d((cv::Vec<double, 3>)matLocalPos);
+	retPose.dir = cv::Point3d((cv::Vec<double, 3>)matLocalDir);
+	retPose.pos = cv::Point3d((cv::Vec<double, 3>)matLocalPos);
 	retPose.inited = inited;
 
 	return retPose;
+}
+
+std::ostream& operator<<(std::ostream& out, const PoseState& ps) {
+	out << "PoseState[" << ps.idxImg << "]" << std::endl;
+	out << "Pos: " << ps.pos << std::endl;
+	out << "Dir: " << ps.dir << std::endl;
+	return out;
 }

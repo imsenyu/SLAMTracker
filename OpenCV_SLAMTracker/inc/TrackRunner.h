@@ -17,12 +17,14 @@ public:
 	TrackRunner(int _ImgBeginIdx, int _ImgEndIdx);
 	~TrackRunner();
 protected:
+	/** 加载的图像序号的起始{Begin}和结束{End} */
 	int idxImgBegin, idxImgEnd;
+	/** 当前运行中的图像序号 */
 	int idxImgCur;
 protected:
 	// 画布对象
 	CanvasDrawer cDrawer;
-
+	bool bIsInRotate;
 	// 数据历史记录
 	std::vector<PoseState> vecPoses; /** \var 记录从开始到现在的所有坐标姿态(位置,方向) */
 	std::vector<FeatureState*> vecKeyFrameFeatures; /** \var 关键帧特征记录(KeyP,P,Descrip) */

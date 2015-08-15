@@ -1,9 +1,11 @@
 #include "CanvasDrawer.h"
 #include "PoseState.h"
 
-CanvasDrawer::CanvasDrawer() :avaliable(false)
+CanvasDrawer::CanvasDrawer(int _ImgIdx) :
+inited(false),
+idxImgBegin(_ImgIdx)
 {
-	initAnimate();
+
 }
 
 
@@ -14,63 +16,61 @@ CanvasDrawer::~CanvasDrawer()
 
 bool CanvasDrawer::useGroundTruth(const std::string groundTruthPath) {
 
-	fileGroundTruth.open(groundTruthPath, std::ios_base::in);
-	cntGroundTruth = 0;
-	return fileGroundTruth.is_open();
+	return poseGroundTruth.setGroundTruth(groundTruthPath);
 }
 
-double CanvasDrawer::drawGroundTruth(cv::Mat& canvas, int iterCnt ) {
-	if (fileGroundTruth.is_open() == false) return false;
-
-	if (cntGroundTruth == 0) {
-		double arrInitPose[12];
-		for (int idx = 0; idx < 12; idx++)
-			fileGroundTruth >> arrInitPose[idx];
-		preGroundTruth.x = arrInitPose[3];
-		preGroundTruth.y = arrInitPose[7];
-		preGroundTruth.z = arrInitPose[11];
-		cntGroundTruth++;
-	}
-
-	cv::Point3d curPoint;
-	double arrPose[12];
-	for (int cnt = 0; cnt < iterCnt; cnt++) {
-		cntGroundTruth++;
-		for (int idx = 0; idx < 12; idx++)
-			fileGroundTruth >> arrPose[idx];
-
-		//进行GPS 初速度方向修正为(0,0,1) 
-		//if (cntGroundTruth == 2) {
-		//	cv::Mat gtInitDir(3, 1, CV_64FC1);
-		//	gtInitDir.at<double>(0, 0) = arrPose[3];
-		//	gtInitDir.at<double>(1, 0) = arrPose[7];
-		//	gtInitDir.at<double>(2, 0) = arrPose[11];
-
-		//	Utils::getRodriguesRotation(gtInitDir, matRotGroundTruthFix);
-		//}
-	}
-	
-	curPoint.x = arrPose[3] - preGroundTruth.x;
-	curPoint.y = arrPose[7] - preGroundTruth.y;
-	curPoint.z = arrPose[11] - preGroundTruth.z;
-
-	double moveDist = cv::norm(curPoint - gGroundTruthPos);
-
-	gGroundTruthPos = curPoint;
-
-	//cv::Mat curPointToMat(3, 1, CV_64FC1);
-	//curPointToMat.at<double>(0, 0) = curPoint.x;
-	//curPointToMat.at<double>(1, 0) = curPoint.y;
-	//curPointToMat.at<double>(2, 0) = curPoint.z;
-
-	//curPointToMat = matRotGroundTruthFix.t() * curPointToMat;
-	//curPoint = cv::Point3d((cv::Vec < double, 3>)curPointToMat);
-
-	cv::circle(canvas, gPointBase + CFG_dDrawFrameStep* cv::Point2f(curPoint.x, -curPoint.z), 1, cv::Scalar(255, 0, 255), 1);
-
-
-	return moveDist;
-}
+//double CanvasDrawer::drawGroundTruth(int idxImgCur) {
+//	if (fileGroundTruth.is_open() == false) return false;
+//
+//	if (idxGroundTruth == 0) {
+//		double arrInitPose[12];
+//		for (int idx = 0; idx < 12; idx++)
+//			fileGroundTruth >> arrInitPose[idx];
+//		preGroundTruth.x = arrInitPose[3];
+//		preGroundTruth.y = arrInitPose[7];
+//		preGroundTruth.z = arrInitPose[11];
+//		idxGroundTruth++;
+//	}
+//
+//	cv::Point3d curPoint;
+//	double arrPose[12];
+//	for (int cnt = 0; cnt < iterCnt; cnt++) {
+//		idxGroundTruth++;
+//		for (int idx = 0; idx < 12; idx++)
+//			fileGroundTruth >> arrPose[idx];
+//
+//		//进行GPS 初速度方向修正为(0,0,1) 
+//		//if (cntGroundTruth == 2) {
+//		//	cv::Mat gtInitDir(3, 1, CV_64FC1);
+//		//	gtInitDir.at<double>(0, 0) = arrPose[3];
+//		//	gtInitDir.at<double>(1, 0) = arrPose[7];
+//		//	gtInitDir.at<double>(2, 0) = arrPose[11];
+//
+//		//	Utils::getRodriguesRotation(gtInitDir, matRotGroundTruthFix);
+//		//}
+//	}
+//	
+//	curPoint.x = arrPose[3] - preGroundTruth.x;
+//	curPoint.y = arrPose[7] - preGroundTruth.y;
+//	curPoint.z = arrPose[11] - preGroundTruth.z;
+//
+//	double moveDist = cv::norm(curPoint - gGroundTruthPos);
+//
+//	gGroundTruthPos = curPoint;
+//
+//	//cv::Mat curPointToMat(3, 1, CV_64FC1);
+//	//curPointToMat.at<double>(0, 0) = curPoint.x;
+//	//curPointToMat.at<double>(1, 0) = curPoint.y;
+//	//curPointToMat.at<double>(2, 0) = curPoint.z;
+//
+//	//curPointToMat = matRotGroundTruthFix.t() * curPointToMat;
+//	//curPoint = cv::Point3d((cv::Vec < double, 3>)curPointToMat);
+//
+//	cv::circle(canvas, gPointBase + CFG_dDrawFrameStep* cv::Point2f(curPoint.x, -curPoint.z), 1, cv::Scalar(255, 0, 255), 1);
+//
+//
+//	return moveDist;
+//}
 
 bool CanvasDrawer::setLogPath(const std::string& recordFilePath) {
 	if (recordFilePath.length() > 0) {
@@ -79,38 +79,61 @@ bool CanvasDrawer::setLogPath(const std::string& recordFilePath) {
 	return fileTraceRecord.is_open();
 }
 
-void CanvasDrawer::initAnimate() {
+void CanvasDrawer::initAnimate(PoseState& initPose) {
 	
-
 	//////////////////////////////////////////////////////////////////////////
 	// 画布相关定义
 	matCanvas.create(cv::Size(800, 800), CV_8UC3);
 	matCanvas = cv::Scalar(255, 255, 255);
 
 	//Dir 需要根据Pose 中的来确定，或者在pose画图时做旋转修正
-	gPointDir = cv::Point3d(0.0f, 0.0f, 1.0f);
-	gPointPos = cv::Point3d(0, 0, 0);
+	gPose = initPose;
 	gPointBase = cv::Point2f(400, 500);
 
-	transNorm = 1.0f;
+	cv::circle(matCanvas, gPointBase + cv::Point2f(gPose.pos.x, -gPose.pos.z), 2, cv::Scalar(-1));
 
-	cv::circle(matCanvas, gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z), 2, cv::Scalar(-1));
-
-	cv::imshow("canvas", matCanvas);
+	cv::imshow("Canvas", matCanvas);
 	cv::waitKey(100);
-	avaliable = true;
-
-	gGroundTruthPos.x = 0.0f;
-	gGroundTruthPos.y = 0.0f;
-	gGroundTruthPos.z = 0.0f;
+	inited = true;
 
 }
 
 
-void CanvasDrawer::drawCanvas(PoseState& curPstate){
+void CanvasDrawer::drawCanvas(PoseState& curPose){
 
+	//从 gPose 到 curPose 画一条线 在matCanvas上
+	//获取一下 curPose.idxImg 的 pose.pos 画一下
 
+	
 
+	//画连线
+	cv::line(matCanvas, 
+		gPointBase + CFG_dDrawFrameStep*cv::Point2f(gPose.pos.x, -gPose.pos.z),
+		gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z),
+		cv::Scalar(-1));
+
+	//更新 gPose到新的坐标
+	
+
+	//画新点 和 GroundTruth点
+	cv::circle(matCanvas, gPointBase + CFG_dDrawFrameStep* cv::Point2f(curPose.pos.x, -curPose.pos.z), 1, cv::Scalar(-1));
+	
+	if (poseGroundTruth.inited()) {
+		cv::Point3d posGroundTruth = poseGroundTruth.getPosition(curPose.idxImg, idxImgBegin);
+		cv::circle(matCanvas, gPointBase + CFG_dDrawFrameStep*cv::Point2f(posGroundTruth.x, -posGroundTruth.z), 1, cv::Scalar(255, 0, 255));
+	}
+
+	//克隆一下 matCanvas 画一下方向
+	cv::Mat matTmpCanvas = matCanvas.clone();
+	cv::line(matTmpCanvas,
+		gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z),
+		gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z) + 10.0f*CFG_dDrawFrameStep * cv::Point2f(curPose.dir.x, -curPose.dir.z),
+		cv::Scalar(255, 0, 0));
+
+	gPose = curPose;
+
+	cv::imshow("Canvas", matTmpCanvas);
+	cv::waitKey(1);
 }
 
 //void CanvasDrawer::drawAnimate(cv::Mat matR, cv::Mat matT, int preImgIdx, int curImgIdx, double transformScale) {
@@ -217,6 +240,6 @@ void CanvasDrawer::drawCanvas(PoseState& curPstate){
 //
 //	cv::Mat matTmpCanvas = matCanvas.clone();
 //	cv::line(matTmpCanvas, gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z), gPointBase + cv::Point2f(gPointPos.x, -gPointPos.z) + 20.0f*cv::Point2f(gPointDir.x, -gPointDir.z), cv::Scalar(255, 0, 0));
-//	cv::imshow("canvas", matTmpCanvas);
+//	cv::imshow("Canvas", matTmpCanvas);
 //	cv::waitKey(1);
 //}

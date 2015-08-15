@@ -15,12 +15,13 @@ public:
 public:
 	bool inited;
 	int idxImg;
-	cv::Point3d pointPos;/** \var 记录当时位置点 */
-	cv::Point3d pointDir;/** \var 记录当时镜头方向 */
+	cv::Point3d pos;/** \var 记录当时位置点 */
+	cv::Point3d dir;/** \var 记录当时镜头方向 */
 
 public:
 	/** 对于给定的一个运动,返回新的坐标位置 */
-	PoseState Move(const MotionState& motion);
+	PoseState move(const MotionState& motion);
+	friend std::ostream& operator<<(std::ostream& out, const PoseState& ps);
 };
 
 #endif

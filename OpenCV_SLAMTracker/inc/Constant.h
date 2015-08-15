@@ -29,6 +29,11 @@ namespace Const{
 	/** \var Matrix(3,3) [1,0,0;0,1,0;0,0,1] */
 	extern const cv::Mat mat33_111;
 
+	extern const cv::Point3d pnt3d_000;
+	extern const cv::Point3d pnt3d_001;
+	extern const cv::Point3d pnt3d_010;
+	extern const cv::Point3d pnt3d_100;
+	extern const cv::Point3d pnt3d_111;
 };
 
 #endif

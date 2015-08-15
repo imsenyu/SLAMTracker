@@ -28,7 +28,7 @@ public:
 public:
 	/** 获得degreeR和degreeT, 未运算(-100)则运算，否则直接返回 */
 	double getDegree(const std::string& str);
-	void setState(cv::Mat& _matR, cv::Mat& _matT);
+	friend std::ostream& operator<<(std::ostream& out, const MotionState& ms);
 };
 
 #endif

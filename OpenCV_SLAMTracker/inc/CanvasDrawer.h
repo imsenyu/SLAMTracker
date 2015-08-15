@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "PoseState.h"
+#include "PoseHelper.h"
 /**
 * \class CanvasDrawer
 * \brief 用于绘制轨迹画布
@@ -10,34 +11,34 @@
 class CanvasDrawer
 {
 private:
-	bool avaliable;
+	bool inited;
 public:
-	CanvasDrawer();
+	CanvasDrawer(int _ImgIdx);
 	~CanvasDrawer();
 
 public:
 	cv::Mat matCanvas;
-	cv::Point3d gPointDir;	//方向向量
-	cv::Point3d gPointPos; //位置向量
+	PoseState	gPose;
 	cv::Point2f gPointBase;
 
-	cv::Point3d preGroundTruth;
-	cv::Point3d gGroundTruthPos;
+	//cv::Point3d preGroundTruth;
+	//cv::Point3d gGroundTruthPos;
 
 	std::fstream fileTraceRecord;
-	std::fstream fileGroundTruth;
-	int cntGroundTruth;
-	//cv::Mat matRotGroundTruthFix;
-	double transNorm;
+	PoseHelper poseGroundTruth;
+	int idxGroundTruth;
+	int idxImgBegin;
+	////cv::Mat matRotGroundTruthFix;
+	//double transNorm;
 
 public:
 	bool setLogPath(const std::string& recordFilePath = "");
-	void initAnimate();
-	void drawCanvas(PoseState& curPstate);
+	void initAnimate(PoseState& initPose);
+	void drawCanvas(PoseState& curPose);
 	//void drawAnimate(cv::Mat matR, cv::Mat matT, int preImgIdx, int curImgIdx, double velocityScale);
 	bool useGroundTruth(const std::string groundTruthPath = "");
 private:
-	double drawGroundTruth(cv::Mat& canvas,int iterCnt = 1);
+	double drawGroundTruth(int idxImgCur);
 };
 
 #endif

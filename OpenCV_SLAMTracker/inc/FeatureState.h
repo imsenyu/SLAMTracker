@@ -10,6 +10,7 @@
 class FeatureState
 {
 public:
+	/** 指定_ImgIdx会自动加载对应图像,加载不了throw错误 */
 	FeatureState(int _ImgIdx = -1);
 	~FeatureState();
 public:
@@ -22,6 +23,7 @@ public:
 	cv::Mat matDescriptor;
 
 	bool loadImage(int _ImgIdx);
+	friend std::ostream& operator<<(std::ostream& out, const FeatureState& fs);
 	//void SetState(std::vector<cv::KeyPoint>& _vecKeyPoints, std::vector<cv::Point2f>& _vecFeaturePoints, cv::Mat& _matDescriptor);
 	//void GetState(std::vector<cv::KeyPoint>& _vecKeyPoints, std::vector<cv::Point2f>& _vecFeaturePoints, cv::Mat& _matDescriptor) const;
 };
