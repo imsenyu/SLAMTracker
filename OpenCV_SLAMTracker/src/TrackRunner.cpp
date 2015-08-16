@@ -84,8 +84,8 @@ int TrackRunner::runKeyStep() {
 			FeatureState* ptrFeature = vecKeyList[idx];
 			FrameParser fparser(ptrFeature, ptrCurFeature);
 			fparser.matchFeaturePoints();
-			if (fparser.vecPairPoint[0].size() > 0 && bIsInRotate == false)
-				fparser.validPointsByOpticalFlow(1.0f);
+			//if (fparser.vecPairPoint[0].size() > 0 && bIsInRotate == false)
+			//	fparser.validPointsByOpticalFlow(1.0f);
 
 			//计算对极几何
 			vecCurMotions[idx].idxImg[0] = ptrFeature->idxImg;
@@ -110,7 +110,7 @@ int TrackRunner::runKeyStep() {
 			sEstimator.updateMotion(&vecCurMotions[idx]);
 			double scale = sEstimator.computeScaleTransform();
 
-			if ( scale<0 || scale < 0.4f || scale > 20.0f) { 
+			if ( scale<0 || scale < 0.2f || scale > 20.0f) { 
 				motionStatus = false; 
 				vecCurMotions[idx].inited = false;
 				continue; 
@@ -161,6 +161,12 @@ int TrackRunner::runKeyStep() {
 			}
 
 			PoseState curPoseState = vecEstiPoses[0];
+			if (vecEstiPoses.size() == 2) {
+				curPoseState.pos = (vecEstiPoses[0].pos + vecEstiPoses[1].pos) * 0.5f;
+				curPoseState.dir = (vecEstiPoses[0].dir + vecEstiPoses[1].dir) * 0.5f;
+				curPoseState.dir = curPoseState.dir * (1.0f/cv::norm(curPoseState.dir));
+			}
+
 			if (curPoseState.inited == false) {
 				throw std::exception("错误目标点", 1);
 			}
@@ -200,8 +206,8 @@ std::vector<FeatureState*> TrackRunner::selectKeySequence(int idxImg) {
 	for (; iter != deqFrameFeatures.end();iter++)
 		retVec.push_back( *iter );
 
-	//if (retVec.size() > 2)
-	//	throw std::exception("超过2", 2);
+	if (retVec.size() > 2)
+		throw std::exception("超过2", 2);
 
 	return retVec;
 }
@@ -223,7 +229,7 @@ int TrackRunner::filterMotions(std::vector<MotionState>& vecMotion) {
 
 void TrackRunner::updateKeyList(FeatureState* ptrFeature) {
 
-	while(deqFrameFeatures.size() >= 1) {
+	while(deqFrameFeatures.size() >= 2) {
 
 		FeatureState* ptrPop = deqFrameFeatures.front();
 		deqFrameFeatures.pop_front();
