@@ -13,8 +13,15 @@ PoseState::~PoseState()
 }
 
 PoseState PoseState::move(const MotionState& motion) {
+
+	//校验motion与当前Pose是否匹配
+	if (idxImg != motion.idxImg[0]) {
+		throw std::exception(cv::format("当前Pose[%d]与Motion[%d-%d]不匹配",idxImg,motion.idxImg[0],motion.idxImg[1]).c_str());
+	}
+
 	PoseState retPose(motion.idxImg[1]);
 
+	//cv::Point3转cv::Mat(3,1)
 	double arrLocalPos[] = { pos.x, pos.y, pos.z };
 	double arrLocalDir[] = { dir.x, dir.y, dir.z };
 	cv::Mat matLocalPos(3, 1, CV_64FC1, arrLocalPos),

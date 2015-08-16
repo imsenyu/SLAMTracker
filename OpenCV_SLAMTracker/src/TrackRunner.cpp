@@ -13,7 +13,11 @@ vecPoses(_ImgEndIdx+1), vecMotionLinks(_ImgEndIdx+1)
 
 TrackRunner::~TrackRunner()
 {
-	//TODO: 依次删除 两个FeatureState* 记录
+	//依次删除new出来的两个FeatureState* 记录
+	for (FeatureState* ptr : vecKeyFrameFeatures)
+		delete ptr;
+	for (FeatureState* ptr : deqFrameFeatures)
+		delete ptr;
 }
 
 
@@ -21,8 +25,10 @@ void TrackRunner::initFirstFrame() {
 
 	// 设定输出配置
 	cDrawer.setLogPath(cv::format("./Output/coordOutput_%s.txt", Utils::getTimeNow().c_str()));
-	// 在内部初始化 PoseHelper
-	cDrawer.useGroundTruth(CFG_sPathPoseGroutTruth);
+	// 初始化 PoseHelper
+	pHelper.setGroundTruth(CFG_sPathPoseGroutTruth);
+	// 给Drawer设置groundTruth
+	cDrawer.ptrPoseHelper = &pHelper;
 
 	//初始化最初的姿态
 	//TODO: 如果不是从0开始的话，需要把初始角度修正为 GroundTruth的 方向, 仅仅pos不够
@@ -31,128 +37,118 @@ void TrackRunner::initFirstFrame() {
 	vecPoses[idxImgBegin].inited = true;
 	vecPoses[idxImgBegin].idxImg = idxImgBegin;
 
-	// 初始化画布对象
+	// 画布对象参数初始化
 	cDrawer.initAnimate(vecPoses[idxImgBegin]);
 
-	//先算idx = idxImgBegin 时候的 FeatureState, 
+	// 初始化idx = idxImgBegin 并计算特征和描述子
 	FeatureState* ptrCurFeature = new FeatureState(idxImgBegin);
+	ptrCurFeature->detect(CFG_iMaxFeatures);
 
-	//TODO: 后续把这个功能剥离到 FeatureState 中,不放在 FrameParser
-	FrameParser::detectExtractFeatures(CFG_iMaxFeatures, *ptrCurFeature);
-
-	//最近可用队列中压入
+	// 在最近可用队列中压入
 	deqFrameFeatures.push_back(ptrCurFeature);
 
 	//下次运行从 idxImgBegin+1 开始
 	idxImgCur = idxImgBegin + 1;
 }
 
+// [点] 特定帧数据记录 int<-> 当前位置，方向, 全记录
+// [点] 特定帧数据记录 int<-> 特征点 vecKP, vecP, matDescriptor->存储数据量在 2000K 一个,部分记录
+// [边] 帧间数据记录 用 vector< int> --- 新map<int,旧>> 存matR, matT, Scale 全记录
+
+// 扩展: [关键帧]池 和 [最近连续可用帧]池, 每产生一帧，如果往[最近]扔，[最近]是个定长队列, 如果超了，并且距离够了 扔进 [关键帧]里面去，否则销毁掉
+
+//当前应该跑 nextStep那一帧
+
+// 先从历史数据中选出 K 个最近参考帧 + ALL 关键帧进行 match
+// 选取一个帧ptr 序列
 int TrackRunner::runKeyStep() {
-	printf("///////////////////////////////////////////\n");
-	printf("///////// idxImgCur: %06d /////////\n",idxImgCur);
-	printf("///////////////////////////////////////////\n");
+
+	printf("////////////////////////////////////////////\n");
+	printf("//////////// idxImgCur: %06d ////////////\n",idxImgCur);
+	printf("////////////////////////////////////////////\n");
+
 	TIME_BEGIN("MainLoop");
 
 		TIME_BEGIN("FeatureDetect");
+		/** TODO: 可以考虑 多线程并行计算,然后在这里放个 wait
+		 *		  另外那个线程算好一个放个 signal
+		 */
 		// 读取当前帧数据
-		//可以考虑 多线程并行计算,然后在这里放个 wait
-		//另外那个线程算好一个放个 signal
 		FeatureState* ptrCurFeature = new FeatureState(idxImgCur);
-		FrameParser::detectExtractFeatures(CFG_iMaxFeatures, *ptrCurFeature);
-
-		std::cout << *ptrCurFeature << std::endl;
+		ptrCurFeature->detect(CFG_iMaxFeatures);
 		TIME_END("FeatureDetect");
-		// [点] 特定帧数据记录 int<-> 当前位置，方向, 全记录
-		// [点] 特定帧数据记录 int<-> 特征点 vecKP, vecP, matDescriptor->存储数据量在 2000K 一个,部分记录
-		// [边] 帧间数据记录 用 vector< int> --- 新map<int,旧>> 存matR, matT, Scale 全记录
 
-		// 扩展: [关键帧]池 和 [最近连续可用帧]池, 每产生一帧，如果往[最近]扔，[最近]是个定长队列, 如果超了，并且距离够了 扔进 [关键帧]里面去，否则销毁掉
-
-		//当前应该跑 nextStep那一帧
-
-		// 先从历史数据中选出 K 个最近参考帧 + ALL 关键帧进行 match
-		// 选取一个帧ptr 序列
+		// 确定当前帧需要比较的 历史帧集合
 		std::vector<FeatureState*> vecKeyList;
+		/** TODO: 可能需要靠 视觉磁带模型预估closure */
 		vecKeyList = selectKeySequence(idxImgCur);
 
-		// 调用 FrameParser 分别处理 参考帧<->当前帧 的 matR和MatT
+		// 对每一对历史-当前帧 进行运动估算
 		std::vector<MotionState> vecCurMotions( vecKeyList.size() );
 		ScaleEstimator sEstimator;
 
+		// 调用 FrameParser 分别处理 参考帧<->当前帧 的 matR和MatT
 		TIME_BEGIN(cv::format("Match&Motion[%d]", vecKeyList.size()));
 		for (int idx = 0; idx < vecKeyList.size();idx++) {
 			FeatureState* ptrFeature = vecKeyList[idx];
-			FrameParser fparser(ptrFeature, ptrCurFeature);
-			fparser.matchFeaturePoints();
-			//if (fparser.vecPairPoint[0].size() > 0 && bIsInRotate == false)
-			//	fparser.validPointsByOpticalFlow(1.0f);
 
-			//计算对极几何
+			/** TODO: 考虑对不同情况设置不同过滤规则 */
+			// 初始化 帧间处理器
+			FrameParser fparser(ptrFeature, ptrCurFeature);
+			fparser.match(2.0f);
+
+			// 对极几何 计算运动matR和matT
 			vecCurMotions[idx].idxImg[0] = ptrFeature->idxImg;
 			vecCurMotions[idx].idxImg[1] = ptrCurFeature->idxImg;
-			bool motionStatus = fparser.computeMotion(vecCurMotions[idx]);
-			//计算尺度
 			vecCurMotions[idx].mapPairPoints = fparser.mapPairPoints;
-
-			//二次光流
-			//MotionState tmpMotion;
-			//tmpMotion.idxImg[0] = vecCurMotions[idx].idxImg[0];
-			//tmpMotion.idxImg[1] = vecCurMotions[idx].idxImg[1];
-
-			//fparser.validPointsByOpticalFlow(1.0f);
-
-
+			bool motionStatus = fparser.computeMotion(vecCurMotions[idx]);
+			
+			// 运动参数计算失败
 			if (motionStatus == false) {
-				vecCurMotions[idx].inited = false;
 				continue;
 			}
 
+			// 尺度估算开启
 			sEstimator.updateMotion(&vecCurMotions[idx]);
 			double scale = sEstimator.computeScaleTransform();
 
-			if ( scale<0 || scale < 0.2f || scale > 20.0f) { 
+			/** TODO: 这里需要一个合适的尺度评价 */
+			if ( scale<0 || scale < 0.4f || scale > 20.0f) { 
 				motionStatus = false; 
 				vecCurMotions[idx].inited = false;
 				continue; 
 			}
 
-			vecCurMotions[idx].scale = scale;
+			// 目前使用 GroundTruth的 运动尺度，因此目前误差只在旋转角度上
+			//vecCurMotions[idx].scale = scale;
+			vecCurMotions[idx].scale = 1.65f/cv::norm(pHelper.getPosition(vecCurMotions[idx].idxImg[1], vecCurMotions[idx].idxImg[0]));
 
-			std::cout << vecCurMotions[idx] << std::endl;
-			//放入vecCurMotions
 		}
 		TIME_END(cv::format("Match&Motion[%d]", vecKeyList.size()));
 
-
-		//按照一定规则过滤 vecCurMotions,凡是过滤掉的，都要delete Motion
+		//按照一定规则过滤 vecCurMotions,目前先过滤掉 inited为false的
 		int cntValid = filterMotions(vecCurMotions);
 
-		// 数据点崩了跳过 delete CurFeature
+		// 如果过滤完没有了, 就跳帧
 		if (cntValid < 1) {
-			std::cout << "数据点崩了" << std::endl;
 			delete ptrCurFeature;
-			//TODO: 跳帧
 		}
 		else {
+			/** TODO: 对算出来的这么多有效的, 1是要判定closure; 2是要综合(取平均哈哈哈)运动状态 */
 			TIME_BEGIN("PoseEstimate");
 
-		
+			// 对于计算出来的每对Motion, 应用该运动
 			std::vector<PoseState> vecEstiPoses(vecCurMotions.size());
 			for (int idx = 0; idx < vecCurMotions.size(); idx++) {
 				MotionState& curMotion = vecCurMotions[idx];
 				if (curMotion.inited == true) {
-					//从 vecCurMotions[idx].idxImg[0]  ->  [1]
-					//执行一个运算，得到一个 PoseState, 
-					std::cout << vecPoses[curMotion.idxImg[0]] << std::endl;
-					std::cout << curMotion << std::endl;
+					// 对vecPose的对应位姿,应用Motion得到 vecEstiPoses新位姿
 					vecEstiPoses[idx] = vecPoses[curMotion.idxImg[0]].move(curMotion);
-					std::cout << vecEstiPoses[idx] << std::endl;
 				}
 			}
-			// 算出新的 PoseState;平均或者什么最小二乘
-			// vecEstiPoses 对 true的 求个平均值?
 			
-			if (std::abs(vecCurMotions[0].degreeT) > 7.0f) {
+			/** TODO: 需要有个方法判定当前是否在转弯. */
+			if (std::abs(vecCurMotions[0].degreeT) > 5.0f) {
 				printf("...\n");
 				bIsInRotate = true;
 			}
@@ -160,30 +156,36 @@ int TrackRunner::runKeyStep() {
 				bIsInRotate = false;
 			}
 
+			/** TODO: 新的多位姿选择方法 */
+			// 对多个计算得到的新位姿,按照等比数列 1/2; 1/4; 1/8进行 加权平均....好low
 			PoseState curPoseState = vecEstiPoses[0];
-			if (vecEstiPoses.size() == 2) {
-				curPoseState.pos = (vecEstiPoses[0].pos + vecEstiPoses[1].pos) * 0.5f;
-				curPoseState.dir = (vecEstiPoses[0].dir + vecEstiPoses[1].dir) * 0.5f;
+			int vecEstLen = vecEstiPoses.size();
+			if (vecEstLen >= 2) {
+				curPoseState.pos = Const::pnt3d_000;
+				curPoseState.dir = Const::pnt3d_000;
+				double pow[] = { 1.0f / 2.0f, 1.0f / 4.0f, 1.0f / 8.0f, 1.0f / 16.0f };
+				
+				for (int idx = 0; idx < vecEstLen; idx++) {
+					curPoseState.pos += vecEstiPoses[idx].pos * pow[idx];
+					curPoseState.dir += vecEstiPoses[idx].dir * pow[idx];
+				}
+				curPoseState.pos += vecEstiPoses[vecEstLen - 1].pos * pow[vecEstLen - 1];
+				curPoseState.dir += vecEstiPoses[vecEstLen - 1].dir * pow[vecEstLen - 1];
+
 				curPoseState.dir = curPoseState.dir * (1.0f/cv::norm(curPoseState.dir));
 			}
 
-			if (curPoseState.inited == false) {
-				throw std::exception("错误目标点", 1);
-			}
-			//更新队列和关键帧
+			// 更新队列和关键帧
 			updateKeyList(ptrCurFeature);
 			vecPoses[idxImgCur] = curPoseState;
-
 
 			TIME_END("PoseEstimate");
 
 			std::cout << curPoseState << std::endl;
-
+			// 画布画出当前位姿, 以及GroundTruth实际路径
 			cDrawer.drawCanvas(curPoseState);
 		}
-		// 对这跟 当前帧有关的K对 数据, 取平均，或者怎么做 算出当前帧的 坐标数据
 
-		// 调用 CanvasDraw 画出来，并画groundtruth
 	TIME_END("MainLoop");
 
 	return ++idxImgCur;
@@ -201,13 +203,11 @@ void TrackRunner::showTrack() {
 
 std::vector<FeatureState*> TrackRunner::selectKeySequence(int idxImg) {
 	std::vector<FeatureState*> retVec;
-	//暂时返回 前一帧
+	
+	// 返回最近队列中所有数据
 	auto iter = deqFrameFeatures.begin();
 	for (; iter != deqFrameFeatures.end();iter++)
 		retVec.push_back( *iter );
-
-	if (retVec.size() > 2)
-		throw std::exception("超过2", 2);
 
 	return retVec;
 }
@@ -229,7 +229,7 @@ int TrackRunner::filterMotions(std::vector<MotionState>& vecMotion) {
 
 void TrackRunner::updateKeyList(FeatureState* ptrFeature) {
 
-	while(deqFrameFeatures.size() >= 2) {
+	while(deqFrameFeatures.size() >= 1) {
 
 		FeatureState* ptrPop = deqFrameFeatures.front();
 		deqFrameFeatures.pop_front();

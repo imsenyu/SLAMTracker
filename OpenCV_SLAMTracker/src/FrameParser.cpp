@@ -1,89 +1,67 @@
 #include "FrameParser.h"
 
-void FrameParser::InitData(int idx0, int idx1) {
-	isInitedByCloneImage = false;
-	isTimeProfile = true;
-	isShowImage = true;
-	isLogData = true;
-
-	preImgIdx = idx0;
-	curImgIdx = idx1;
-
-	/*
-	7.188560000000e+02 0.000000000000e+00 6.071928000000e+02
-	0.000000000000e+00 7.188560000000e+02 1.852157000000e+02
-	0.000000000000e+00 0.000000000000e+00 1.000000000000e+00
-	*/
-	//double arrCameraParam[] = { 718.856f, 0, 607.1928f, 0, 718.856f, 185.2157f, 0, 0, 1 };
-	//CFG_mCameraParameter = cv::Mat(3, 3, CV_64FC1,arrCameraParam).clone();
-
-
-}
-
-
-
 FrameParser::~FrameParser() {
 	
 }
 
-int FrameParser::detectExtractFeatures(int nFeatures, FeatureState& fState) {
-	return FrameParser::detectExtractFeatures(nFeatures, fState.matImage, fState.vecKeyPoints, fState.vecFeaturePoints, fState.matDescriptor, fState.idxImg);
-}
-
-int FrameParser::detectExtractFeatures(
-	int nFeatures, cv::Mat& matImage,
-	std::vector<cv::KeyPoint>& vecKeyPoints,
-	std::vector<cv::Point2f>& vecFeaturePoints,
-	cv::Mat & matDescriptor,
-	int idxImg) {
-
-	bool _isTimeProfile = true;
-	bool _isShowImage = false;
-	bool _isLogData = true;
-	bool _isUseLocalFeature = CFG_bIsUseCacheFeature;
-	bool _isCacheCurrentFeature = CFG_bIsCacheCurrentFeature;
-
-	if (_isUseLocalFeature) {
-		TIME_BEGIN("Feature Read");
-		bool ret = loadFeature(idxImg,nFeatures,vecKeyPoints,vecFeaturePoints,matDescriptor);
-		TIME_END("Feature Read");
-		//读取不成功的话就自动计算
-		if ( ret == true)
-			return vecFeaturePoints.size();
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	//关键点生成
-	cv::SiftFeatureDetector siftDetector(nFeatures);
-	if (_isTimeProfile) TIME_BEGIN(cv::format("image-detect-%d", idxImg));
-	siftDetector.detect(matImage, vecKeyPoints);
-	if (_isTimeProfile) TIME_END(cv::format("image-detect-%d", idxImg));
-
-	vecFeaturePoints.clear();
-
-	//////////////////////////////////////////////////////////////////////////
-	// KeyPoint 转换成 Point2
-	for (auto& kpt : vecKeyPoints)
-		vecFeaturePoints.push_back(kpt.pt);
-
-	if (_isLogData)
-		printf("detect keypoint.size=%d\n", vecFeaturePoints.size());
-
-	//////////////////////////////////////////////////////////////////////////
-	// 128维特征向量提取
-	cv::SiftDescriptorExtractor siftExtractor(nFeatures);
-	if (_isTimeProfile) TIME_BEGIN(cv::format("desc-compute-%d", idxImg));
-	siftExtractor.compute(matImage, vecKeyPoints, matDescriptor);
-	if (_isTimeProfile) TIME_END(cv::format("desc-compute-%d", idxImg));
-
-	if (_isCacheCurrentFeature) {
-		TIME_BEGIN("Feature Write");
-		writeFeature(idxImg, nFeatures, vecKeyPoints, vecFeaturePoints, matDescriptor);
-		TIME_END("Feature Write");
-	}
-
-	return vecFeaturePoints.size();
-}
+//int FrameParser::detectExtractFeatures(int nFeatures, FeatureState& fState) {
+//	return FrameParser::detectExtractFeatures(nFeatures, fState.matImage, fState.vecKeyPoints, fState.vecFeaturePoints, fState.matDescriptor, fState.idxImg);
+//}
+//
+//int FrameParser::detectExtractFeatures(
+//	int nFeatures, cv::Mat& matImage,
+//	std::vector<cv::KeyPoint>& vecKeyPoints,
+//	std::vector<cv::Point2f>& vecFeaturePoints,
+//	cv::Mat & matDescriptor,
+//	int idxImg) {
+//
+//	bool _isTimeProfile = true;
+//	bool _isShowImage = false;
+//	bool _isLogData = true;
+//	bool _isUseLocalFeature = CFG_bIsUseCacheFeature;
+//	bool _isCacheCurrentFeature = CFG_bIsCacheCurrentFeature;
+//
+//	if (_isUseLocalFeature) {
+//		TIME_BEGIN("Feature Read");
+//		bool ret = loadFeature(idxImg,nFeatures,vecKeyPoints,vecFeaturePoints,matDescriptor);
+//		TIME_END("Feature Read");
+//		//读取不成功的话就自动计算
+//		if ( ret == true)
+//			return vecFeaturePoints.size();
+//	}
+//
+//	//////////////////////////////////////////////////////////////////////////
+//	//关键点生成
+//	cv::SiftFeatureDetector siftDetector(nFeatures);
+//	if (_isTimeProfile) TIME_BEGIN(cv::format("image-detect-%d", idxImg));
+//	siftDetector.detect(matImage, vecKeyPoints);
+//	if (_isTimeProfile) TIME_END(cv::format("image-detect-%d", idxImg));
+//
+//	vecFeaturePoints.clear();
+//
+//	//////////////////////////////////////////////////////////////////////////
+//	// KeyPoint 转换成 Point2
+//	for (auto& kpt : vecKeyPoints)
+//		vecFeaturePoints.push_back(kpt.pt);
+//
+//	if (_isLogData)
+//		printf("detect keypoint.size=%d\n", vecFeaturePoints.size());
+//
+//	//////////////////////////////////////////////////////////////////////////
+//	// 128维特征向量提取
+//	cv::SiftDescriptorExtractor siftExtractor(nFeatures);
+//	if (_isTimeProfile) TIME_BEGIN(cv::format("desc-compute-%d", idxImg));
+//	siftExtractor.compute(matImage, vecKeyPoints, matDescriptor);
+//	if (_isTimeProfile) TIME_END(cv::format("desc-compute-%d", idxImg));
+//
+//	if (_isCacheCurrentFeature) {
+//		TIME_BEGIN("Feature Write");
+//		writeFeature(idxImg, nFeatures, vecKeyPoints, vecFeaturePoints, matDescriptor);
+//		TIME_END("Feature Write");
+//	}
+//
+//	return vecFeaturePoints.size();
+//}
 
 //void FrameParser::DetectFeaturePoints(int nFeatures, int whichImage) {
 //
@@ -108,7 +86,7 @@ int FrameParser::detectExtractFeatures(
 //
 //}
 
-void FrameParser::matchFeaturePoints() {
+void FrameParser::match(double opThreshold) {
 	bool _isTimeProfile = true && isTimeProfile;
 	bool _isShowImage = true && isShowImage;
 	bool _isLogData = true && isLogData;
@@ -117,13 +95,11 @@ void FrameParser::matchFeaturePoints() {
 	std::vector<cv::DMatch> vecBFMatches;
 	cv::Mat matBFMathes;
 
-	//////////////////////////////////////////////////////////////////////////
-	//暴力匹配器
+	//暴力匹配
 	if (_isTimeProfile) TIME_BEGIN("BF-Matcher");
 	BFMatcher.match(matDescriptor[0], matDescriptor[1], vecBFMatches);
 	if (_isTimeProfile) TIME_END("BF-Matcher");
 
-	//////////////////////////////////////////////////////////////////////////
 	//匹配完毕之后放到 vecPairPoint[2] 中
 	for (auto& match : vecBFMatches) {
 		vecPairPointIdx[0].push_back(match.queryIdx);
@@ -136,9 +112,8 @@ void FrameParser::matchFeaturePoints() {
 	if (true || _isLogData)
 		printf("BFMatch.size=%d\n", vecBFMatches.size());
 
-	//////////////////////////////////////////////////////////////////////////
-	// 光流过滤 匹配数组，放到hahamask中
-	validPointsByOpticalFlow(2.0f);
+	// 光流过滤 匹配数组，放到vecFiltedMask中
+	validPointsByOpticalFlow(opThreshold);
 
 	//打一遍像素点的 差值
 	printf("poin-pair distance\n");
@@ -148,16 +123,16 @@ void FrameParser::matchFeaturePoints() {
 	vecFiltedMask.clear();
 
 //#pragma omp parallel for
+	//过滤掉太短的移动
 	for (int i = 0; i < vecPairPoint[0].size(); i++) {
 		double dist = cv::norm(vecPairPoint[0][i] - vecPairPoint[1][i]);
-		if (dist <7.0f){
+		if (dist <5.0f){
 			vecFiltedMask[i] = false;
 			continue;
 		}
 		vecFiltedMask[i] = true;
 	}
 
-	//////////////////////////////////////////////////////////////////////////
 	// 使用 vecFiltedMask 更新 vecPairPoint
 	for (int i = 0; i < vecPairPoint[0].size(); i++) {
 		if (true == vecFiltedMask[i]) {
@@ -204,24 +179,42 @@ void FrameParser::validPointsByOpticalFlow(double threshold) {
 		vecOpticalStatus, vecOpticalErr);
 	if (_isTimeProfile) TIME_END("optical-flow");
 
-	/* 根据opticalStatus筛一遍vecPairPoint, 筛好之后扔进set< pair<int,int> ,comp> */
-	//////////////////////////////////////////////////////////////////////////
+	// 根据opticalStatus筛一遍vecPairPoint, 筛好之后扔进set< pair<int,int> ,comp>
 	// 筛选重复点
 	std::set< std::pair<int, int> > setPair;
 
 //#pragma omp parallel for
+	std::vector<double> vecDist;
 	for (int idxStatus = 0; idxStatus < vecOpticalStatus.size(); idxStatus++) {
 		if (true == vecOpticalStatus[idxStatus]) {
 			cv::Point2f
 				&p_Pre = vecPairPoint[0][idxStatus],
 				&p_BF = vecPairPoint[1][idxStatus],
 				&p_OF = vecOpticalFound[idxStatus];
-			float dx = abs(p_BF.x - p_OF.x),
-				  dy = abs( p_BF.y - p_OF.y),
-				  de = vecOpticalErr[idxStatus];
+			double dx = abs(p_BF.x - p_OF.x),
+				dy = abs(p_BF.y - p_OF.y);
+			double dist = dx*dx + dy*dy;
+			
+			vecDist.push_back(dist);
+		}
+	}
+	//  限制到300个点时的阈值
+	std::sort(vecDist.begin(), vecDist.end());
+	if (vecDist.size() > 300) {
+		threshold = std::min(threshold, vecDist[300 - 1]);
+	}
+
+	//根据移动阈值筛点
+	for (int idxStatus = 0; idxStatus < vecOpticalStatus.size(); idxStatus++) {
+		if (true == vecOpticalStatus[idxStatus]) {
+			cv::Point2f
+				&p_Pre = vecPairPoint[0][idxStatus],
+				&p_BF = vecPairPoint[1][idxStatus],
+				&p_OF = vecOpticalFound[idxStatus];
+			double dx = abs(p_BF.x - p_OF.x),
+				dy = abs(p_BF.y - p_OF.y);
 			if (dx*dx + dy*dy > threshold) {
 				vecOpticalStatus[idxStatus] = false;
-				
 			}
 			else {
 				setPair.insert(std::pair<int, int>(
@@ -541,37 +534,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 //}
 //
 
-bool FrameParser::writeFeature(int idxImg, int nFeature, std::vector<cv::KeyPoint>& vecKeyPoints, std::vector<cv::Point2f>& vecFeaturePoints, cv::Mat & matDescriptor) {
-	cv::FileStorage fs;
-	fs.open(cv::format(CFG_sPathFeatureData.c_str(), idxImg, nFeature), cv::FileStorage::WRITE);
 
-	if (fs.isOpened() == false) return false;
-
-	fs << "vecKeyPoints" << vecKeyPoints;
-	fs << "vecFeaturePoints" << vecFeaturePoints;
-	fs << "matDescriptor" << matDescriptor;
-
-	fs.release();
-
-	return true;
-}
-
-bool FrameParser::loadFeature(int idxImg, int nFeature, std::vector<cv::KeyPoint>& vecKeyPoints, std::vector<cv::Point2f>& vecFeaturePoints, cv::Mat & matDescriptor) {
-	cv::FileStorage fs;
-	fs.open(cv::format(CFG_sPathFeatureData.c_str(), idxImg, nFeature), cv::FileStorage::READ);
-
-	if ( fs.isOpened() == false ) return false;
-	
-	cv::read(fs["vecKeyPoints"], vecKeyPoints);
-	fs["vecFeaturePoints"] >> vecFeaturePoints;
-	fs["matDescriptor"] >> matDescriptor;
-
-	fs.release();
-
-
-
-	return true;
-}
 
 //void FrameParser::SetFeatureState(const FeatureState& fState, int idx) {
 //	//fState -> this

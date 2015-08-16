@@ -3,7 +3,8 @@
 
 CanvasDrawer::CanvasDrawer(int _ImgIdx) :
 inited(false),
-idxImgBegin(_ImgIdx)
+idxImgBegin(_ImgIdx),
+ptrPoseHelper(NULL)
 {
 
 }
@@ -14,10 +15,10 @@ CanvasDrawer::~CanvasDrawer()
 
 }
 
-bool CanvasDrawer::useGroundTruth(const std::string groundTruthPath) {
-
-	return poseGroundTruth.setGroundTruth(groundTruthPath);
-}
+//bool CanvasDrawer::useGroundTruth(const std::string groundTruthPath) {
+//
+//	return ptrPoseHelper && ptrPoseHelper->setGroundTruth(groundTruthPath);
+//}
 
 //double CanvasDrawer::drawGroundTruth(int idxImgCur) {
 //	if (fileGroundTruth.is_open() == false) return false;
@@ -81,7 +82,6 @@ bool CanvasDrawer::setLogPath(const std::string& recordFilePath) {
 
 void CanvasDrawer::initAnimate(PoseState& initPose) {
 	
-	//////////////////////////////////////////////////////////////////////////
 	// 画布相关定义
 	matCanvas.create(cv::Size(800, 800), CV_8UC3);
 	matCanvas = cv::Scalar(255, 255, 255);
@@ -90,36 +90,30 @@ void CanvasDrawer::initAnimate(PoseState& initPose) {
 	gPose = initPose;
 	gPointBase = cv::Point2f(400, 500);
 
+	// 绘制初始点
 	cv::circle(matCanvas, gPointBase + cv::Point2f(gPose.pos.x, -gPose.pos.z), 2, cv::Scalar(-1));
 
 	cv::imshow("Canvas", matCanvas);
 	cv::waitKey(100);
 	inited = true;
-
 }
 
 
-void CanvasDrawer::drawCanvas(PoseState& curPose){
+void CanvasDrawer::drawCanvas(PoseState& curPose, bool _isTruth){
 
-	//从 gPose 到 curPose 画一条线 在matCanvas上
-	//获取一下 curPose.idxImg 的 pose.pos 画一下
-
-	
-
-	//画连线
+	//画连线 gPose->curPose
 	cv::line(matCanvas, 
 		gPointBase + CFG_dDrawFrameStep*cv::Point2f(gPose.pos.x, -gPose.pos.z),
 		gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z),
 		cv::Scalar(-1));
 
-	//更新 gPose到新的坐标
 	
-
-	//画新点 和 GroundTruth点
+	//画新点
 	cv::circle(matCanvas, gPointBase + CFG_dDrawFrameStep* cv::Point2f(curPose.pos.x, -curPose.pos.z), 1, cv::Scalar(-1));
 	
-	if (poseGroundTruth.inited()) {
-		cv::Point3d posGroundTruth = poseGroundTruth.getPosition(curPose.idxImg, idxImgBegin);
+	// 绘制GroundTruth路径
+	if ( _isTruth &&  ptrPoseHelper && ptrPoseHelper->inited()) {
+		cv::Point3d posGroundTruth = ptrPoseHelper->getPosition(curPose.idxImg, idxImgBegin);
 		cv::circle(matCanvas, gPointBase + CFG_dDrawFrameStep*cv::Point2f(posGroundTruth.x, -posGroundTruth.z), 1, cv::Scalar(255, 0, 255));
 	}
 
@@ -130,6 +124,7 @@ void CanvasDrawer::drawCanvas(PoseState& curPose){
 		gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z) + 10.0f*CFG_dDrawFrameStep * cv::Point2f(curPose.dir.x, -curPose.dir.z),
 		cv::Scalar(255, 0, 0));
 
+	//更新 gPose到新的坐标
 	gPose = curPose;
 
 	cv::imshow("Canvas", matTmpCanvas);

@@ -28,11 +28,18 @@ namespace Const{
 	extern const cv::Mat mat33_000;
 	/** \var Matrix(3,3) [1,0,0;0,1,0;0,0,1] */
 	extern const cv::Mat mat33_111;
+	/** \var Matrix(3,3) [-1,0,0;0,1,0;0,0,-1] */
+	extern const cv::Mat mat33_rot180;
 
+	/** \var Point3 [0,0,0] */
 	extern const cv::Point3d pnt3d_000;
+	/** \var Point3 [0,0,1] */
 	extern const cv::Point3d pnt3d_001;
+	/** \var Point3 [0,1,0] */
 	extern const cv::Point3d pnt3d_010;
+	/** \var Point3 [1,0,0] */
 	extern const cv::Point3d pnt3d_100;
+	/** \var Point3 [1,1,1] */
 	extern const cv::Point3d pnt3d_111;
 };
 

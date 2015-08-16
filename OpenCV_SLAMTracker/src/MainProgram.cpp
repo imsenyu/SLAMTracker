@@ -21,6 +21,7 @@ int main(int argc, char* argv[]) {
 			runner.showFrameMotion();
 			runner.showTrack();
 		}
+		cv::waitKey();
 
 	}
 	// 工作模式配置为 并行批量特征预处理
