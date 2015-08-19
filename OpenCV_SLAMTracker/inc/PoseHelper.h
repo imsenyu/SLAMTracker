@@ -16,6 +16,7 @@ private:
 	std::fstream fileGroundTruth;
 	std::vector<cv::Point3d> vecPosesTruth;
 	bool readPose(cv::Point3d& newPoint);
+	HANDLE ReadMutex;
 public:
 	/** \fn …Ë÷√fileGroundTruth∂¡»°¬∑æ∂ */
 	bool setGroundTruth(const std::string groundTruthPath = "");

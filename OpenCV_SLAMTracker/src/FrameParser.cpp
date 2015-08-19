@@ -1,5 +1,5 @@
 #include "FrameParser.h"
-
+#include "ScaleEstimator.h"
 FrameParser::~FrameParser() {
 	
 }
@@ -126,7 +126,7 @@ void FrameParser::match(double opThreshold) {
 	//过滤掉太短的移动
 	for (int i = 0; i < vecPairPoint[0].size(); i++) {
 		double dist = cv::norm(vecPairPoint[0][i] - vecPairPoint[1][i]);
-		if (dist <5.0f){
+		if (dist <7.0f){
 			vecFiltedMask[i] = false;
 			continue;
 		}
@@ -198,11 +198,11 @@ void FrameParser::validPointsByOpticalFlow(double threshold) {
 			vecDist.push_back(dist);
 		}
 	}
-	//  限制到300个点时的阈值
-	std::sort(vecDist.begin(), vecDist.end());
-	if (vecDist.size() > 300) {
+	//  限制到800个点时的阈值
+	/*std::sort(vecDist.begin(), vecDist.end());
+	if (vecDist.size() > 800) {
 		threshold = std::min(threshold, vecDist[300 - 1]);
-	}
+	}*/
 
 	//根据移动阈值筛点
 	for (int idxStatus = 0; idxStatus < vecOpticalStatus.size(); idxStatus++) {
@@ -463,6 +463,24 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 					maxValidation = compSEL[i];
 					selectDirectionIdx = i;
 				}
+			}
+
+			if (compSEL[0] > 0 && compSEL[1] > 0){
+				// 三角测量
+				ScaleEstimator sEstimator;
+				motion.matT = matT[0].clone();
+				int num_inlier = 0;
+				
+				for (int i = 0; i < 2; i++) {
+					motion.matR =  matR[i].clone();
+					sEstimator.updateMotion(&motion);
+					int num = sEstimator.triangulate();
+					if (num > num_inlier) {
+						selectDirectionIdx = i;
+						num_inlier = num;
+					}
+					printf("[%d]=%d\n", i, num);
+				}		
 			}
 
 			printf("selectDirectionIdx=%d\n", selectDirectionIdx);

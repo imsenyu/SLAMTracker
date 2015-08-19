@@ -3,6 +3,7 @@
 
 PoseHelper::PoseHelper()
 {
+	ReadMutex = CreateMutex(NULL, FALSE, NULL);
 }
 
 
@@ -36,6 +37,7 @@ bool PoseHelper::inited() {
 bool PoseHelper::readPose(cv::Point3d& newPoint) {
 	if (fileGroundTruth.fail() == true)
 		return false;
+	WaitForSingleObject(ReadMutex, INFINITE);
 
 	double arrPose[12];
 	for (int idx = 0; idx < 12; idx++)
@@ -44,6 +46,6 @@ bool PoseHelper::readPose(cv::Point3d& newPoint) {
 	newPoint.x = arrPose[3];
 	newPoint.y = arrPose[7];
 	newPoint.z = arrPose[11];
-
+	ReleaseMutex(ReadMutex);
 	return true;
 }

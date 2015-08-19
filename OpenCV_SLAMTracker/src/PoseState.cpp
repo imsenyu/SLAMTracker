@@ -34,7 +34,9 @@ PoseState PoseState::move(const MotionState& motion) {
 	cv::Mat matTmpRotate;
 	Utils::getRodriguesRotation(matLocalDir, matTmpRotate);
 
-	matLocalPos = matLocalPos + matTmpRotate * motion.matT * 1.65/ motion.scale;
+	matLocalPos = matLocalPos + matTmpRotate * motion.matT * 1.65 / motion.scale;
+
+	//matLocalPos = matLocalPos + dir3 * motion.matT * 1.65f / motion.scale;
 
 	//²»¿¼ÂÇYÖá
 	if (CFG_bIsNotConsiderAxisY) {
@@ -53,6 +55,7 @@ PoseState PoseState::move(const MotionState& motion) {
 	//¿¼ÂÇYÖá
 	else {
 		matLocalDir = motion.matR * matLocalDir;
+		//dir3 = motion.matR * dir3;
 	}
 
 	std::cout << matLocalDir << std::endl;
@@ -61,6 +64,7 @@ PoseState PoseState::move(const MotionState& motion) {
 	retPose.idxImg = motion.idxImg[1];
 	retPose.dir = cv::Point3d((cv::Vec<double, 3>)matLocalDir);
 	retPose.pos = cv::Point3d((cv::Vec<double, 3>)matLocalPos);
+	retPose.dir3 = motion.matR * matTmpRotate;
 	retPose.inited = inited;
 
 	return retPose;

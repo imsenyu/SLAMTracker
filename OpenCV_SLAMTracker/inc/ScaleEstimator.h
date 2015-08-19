@@ -19,12 +19,11 @@ public:
 	// 更新数据
 	bool updateMotion(MotionState* ptrCurMotion);
 
-	//////////////////////////////////////////////////////////////////////////
-	// 已废弃，速度跑飞了
+	/** 尺度计算 */
 	double computeScaleTransform();
 
-	//double ComputeScale();
-
+	/** 三角测量 */
+	int triangulate();
 private:
 	double calcScaleRatio(int flag = 0);
 

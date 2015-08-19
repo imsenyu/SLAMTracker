@@ -73,8 +73,9 @@ CanvasDrawer::~CanvasDrawer()
 //	return moveDist;
 //}
 
-bool CanvasDrawer::setLogPath(const std::string& recordFilePath) {
-	if (recordFilePath.length() > 0) {
+bool CanvasDrawer::setLogPath(const std::string& _recordFilePath) {
+	if (_recordFilePath.length() > 0) {
+		recordFilePath = _recordFilePath;
 		fileTraceRecord.open(recordFilePath, std::ios_base::out);
 	}
 	return fileTraceRecord.is_open();
@@ -83,6 +84,12 @@ bool CanvasDrawer::setLogPath(const std::string& recordFilePath) {
 void CanvasDrawer::initAnimate(PoseState& initPose) {
 	
 	// 画布相关定义
+	matScale.create(cv::Size(4000,300), CV_8UC3);
+	matScale = cv::Scalar(255,255,255);
+	cv::line(matScale, cv::Point2i(0, 100), cv::Point2i(4000, 100), cv::Scalar(128, 128, 128));
+	for (int i = 0; i < 40; i++) {
+		cv::line(matScale, cv::Point2i(i*100,0), cv::Point2i(i*100,300), cv::Scalar(128, 128, 128));
+	}
 	matCanvas.create(cv::Size(800, 800), CV_8UC3);
 	matCanvas = cv::Scalar(255, 255, 255);
 
@@ -94,6 +101,7 @@ void CanvasDrawer::initAnimate(PoseState& initPose) {
 	cv::circle(matCanvas, gPointBase + cv::Point2f(gPose.pos.x, -gPose.pos.z), 2, cv::Scalar(-1));
 
 	cv::imshow("Canvas", matCanvas);
+	cv::imshow("Scale", matScale);
 	cv::waitKey(100);
 	inited = true;
 }
@@ -119,18 +127,65 @@ void CanvasDrawer::drawCanvas(PoseState& curPose, bool _isTruth){
 
 	//克隆一下 matCanvas 画一下方向
 	cv::Mat matTmpCanvas = matCanvas.clone();
+	//cv::Mat curDir3 = curPose.dir3 * Const::mat31_001;
 	cv::line(matTmpCanvas,
 		gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z),
 		gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z) + 10.0f*CFG_dDrawFrameStep * cv::Point2f(curPose.dir.x, -curPose.dir.z),
 		cv::Scalar(255, 0, 0));
+	//cv::line(matTmpCanvas,
+	//	gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z),
+	//	gPointBase + CFG_dDrawFrameStep*cv::Point2f(curPose.pos.x, -curPose.pos.z) + 10.0f*CFG_dDrawFrameStep * cv::Point2f(curDir3.at<double>(0, 0), -curDir3.at<double>(2, 0)),
+	//	cv::Scalar(255, 0, 0));
 
 	//更新 gPose到新的坐标
-	gPose = curPose;
+	
 
 	cv::imshow("Canvas", matTmpCanvas);
 	cv::waitKey(1);
+	logPose(curPose, gPose);
+
+	if (curPose.idxImg/100 != gPose.idxImg/100) {
+		cv::imwrite(recordFilePath + ".png", matTmpCanvas);
+	}
+
+	gPose = curPose;
 }
 
+
+void CanvasDrawer::logPose(PoseState& curPose, PoseState& prePose) {
+	int nFrame = curPose.idxImg - prePose.idxImg;
+	cv::Mat tmpScale;
+	cv::line(matScale, cv::Point2i(curPose.idxImg, 0), cv::Point2i(curPose.idxImg, (int)(cv::norm(curPose.pos-prePose.pos) * 100)), cv::Scalar(0, 0, 0));
+	cv::circle(matScale, cv::Point2i(curPose.idxImg, 100 * cv::norm(ptrPoseHelper->getPosition(curPose.idxImg, prePose.idxImg))), 1, cv::Scalar(255, 0, 255), 1);
+	cv::flip(matScale, tmpScale, 0);
+	cv::imshow("Scale", tmpScale);
+
+	for (int i = 0; i < nFrame; i++) {
+		double tx = (curPose.pos.x - prePose.pos.x)*(i + 1)*(1.0f / nFrame) + prePose.pos.x,
+			ty = (curPose.pos.y - prePose.pos.y)*(i + 1)*(1.0f / nFrame) + prePose.pos.y,
+			tz = (curPose.pos.z - prePose.pos.z)*(i + 1)*(1.0f / nFrame) + prePose.pos.z;
+		//cv::Mat tDir(3, 1, CV_64FC1), oDir(3, 1,  CV_64FC1);
+		//tDir.at<double>(0,0) = (curPose.dir.x - prePose.dir.x)*(i + 1)*(1.0f / nFrame) + prePose.dir.x;
+		//tDir.at<double>(1, 0) = (curPose.dir.y - prePose.dir.y)*(i + 1)*(1.0f / nFrame) + prePose.dir.y;
+		//tDir.at<double>(2, 0) = (curPose.dir.z - prePose.dir.z)*(i + 1)*(1.0f / nFrame) + prePose.dir.z;
+
+		//oDir.at<double>(0, 0) = prePose.dir.x;
+		//oDir.at<double>(1, 0) = prePose.dir.y;
+		//oDir.at<double>(2, 0) = prePose.dir.z;
+
+		//tDir *= (1.0f / cv::norm(tDir));
+
+		//cv::Mat tRot;
+		//Utils::getRodriguesRotation(tDir, tRot, oDir);
+
+		fileTraceRecord <<
+			curPose.dir3.at<double>(0, 0) << " " << curPose.dir3.at<double>(0, 1) << " " << curPose.dir3.at<double>(0, 2) << " " << tx << " " <<
+			curPose.dir3.at<double>(1, 0) << " " << curPose.dir3.at<double>(1, 1) << " " << curPose.dir3.at<double>(1, 2) << " " << ty << " " <<
+			curPose.dir3.at<double>(2, 0) << " " << curPose.dir3.at<double>(2, 1) << " " << curPose.dir3.at<double>(2, 2) << " " << tz << std::endl;
+
+	}
+
+}
 //void CanvasDrawer::drawAnimate(cv::Mat matR, cv::Mat matT, int preImgIdx, int curImgIdx, double transformScale) {
 //	if (avaliable == false) {
 //		initAnimate();

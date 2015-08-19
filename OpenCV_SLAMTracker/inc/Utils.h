@@ -2,6 +2,7 @@
 #define UTILS_H_INCLUDED
 
 #include "stdafx.h"
+#include "Constant.h"
 
 /** \var 用于运行时间统计(ms),不支持多线程 */
 extern std::map<std::string, double> mapTBegin; 
@@ -26,7 +27,7 @@ extern std::map<std::string, double> mapTBegin;
  */
 namespace Utils {
 	/** \fn 获得 \var rtDir(3,1,CV_F64C1) 相对于 [0,0,1]' 方向的旋转矩阵 \var matRotatoin */
-	double getRodriguesRotation(cv::Mat rtDir, cv::Mat& matRotation, double ratio = 1.0f);
+	double getRodriguesRotation(cv::Mat rtDir, cv::Mat& matRotation, cv::Mat orignDir = Const::mat31_001,double ratio = 1.0f);
 
 	/** \fn 获得Command命令行选项 */
 	std::string getCmdOption(char ** begin, char ** end, const std::string & option);

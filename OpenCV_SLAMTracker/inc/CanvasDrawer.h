@@ -18,10 +18,12 @@ public:
 	~CanvasDrawer();
 
 public:
+	cv::Mat matScale;
 	cv::Mat matCanvas;	/** \var 当前画布 */
 	PoseState	gPose;	/** \var 上一个需要绘制的点 */
 	cv::Point2f gPointBase; /** \var 绘制相对于画布(x,y)的原点偏移 */
 
+	std::string recordFilePath;
 	std::fstream fileTraceRecord; /** \var 路径记录文件 */
 	PoseHelper* ptrPoseHelper; /** \var GroundTruth数据辅助对象指针,默认NULL */
 	int idxImgBegin; /** \var 绘制起始idxImg */
@@ -43,7 +45,8 @@ public:
 	 *	\param _isTruth, 是否绘制GroundTruth路径
 	 */
 	void drawCanvas(PoseState& curPose, bool _isTruth = true);
-
+private:
+	void logPose(PoseState& curPose, PoseState& prePose);
 };
 
 #endif

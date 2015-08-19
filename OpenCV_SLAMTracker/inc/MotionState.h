@@ -19,7 +19,7 @@ public:
 	cv::Mat matR, matT; /** \var 旋转和位移矩阵 */
 	double degreeR, degreeT; /** \var matR和MatT的旋转角 */
 	double scale; /** 尺度(到地面距离) */
-
+	cv::Mat _matR_; /** 持久化matR */
 	/** \var 前后两帧的对应点映射
 	 *	\brief 平均每帧 500个点对，每个点8Bytes,一共 8K, 4000帧 32MB.可以接受
 	 */

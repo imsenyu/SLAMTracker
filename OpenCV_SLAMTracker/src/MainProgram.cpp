@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 		TrackRunner runner(CFG_iImageLoadBegin, CFG_iImageLoadEnd);
 
 		runner.initFirstFrame();
-
+		int cnt = 0;
 		while (true) {
 
 			int idxImgCur = runner.runKeyStep();
@@ -20,13 +20,21 @@ int main(int argc, char* argv[]) {
 
 			runner.showFrameMotion();
 			runner.showTrack();
+			cnt++;
 		}
+		runner.lm();
 		cv::waitKey();
 
 	}
 	// 工作模式配置为 并行批量特征预处理
 	else if (CFG_sModeExecute == "feature") {
-	
+#pragma omp parallel for
+		for (int idx = CFG_iImageLoadBegin; idx <= CFG_iImageLoadEnd; idx++) {
+			
+			FeatureState fs(idx);
+			fs.detect(CFG_iMaxFeatures);
+			printf("FeatureDetect[%d]-\n",idx);
+		}
 	
 	}
 

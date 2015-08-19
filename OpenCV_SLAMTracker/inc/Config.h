@@ -27,5 +27,7 @@ extern double CFG_dScaleRatioErrorDefault; /** \var double:³ß¶È±ä»»Òì³£µÄÄ¬ÈÏÎ»Ò
 extern double CFG_dRotationDiffLimit; /** \var double:Î»ÒÆĞı×ª½Ç¶ÈÔöÁ¿ÏŞÖÆÖµ(degree) */
 extern double CFG_dScaleInvIncreaseDiffLimit; /** \var double:Î»ÒÆ(³ß¶Èµ¹Êı)ÔöÁ¿ÏŞÖÆ */
 extern cv::Mat CFG_mCameraParameter; /** \var Ïà»úÄÚ²ÎÊı¾ØÕó */
+extern int CFG_iDequeFrameNumber; /** \var int:ÀúÊ·¶ÓÁĞÖĞµÄÖ¡ÊıÏŞÖÆ */
+extern double CFG_dOpticalFlowThreshold; /** \var double:¹âÁ÷¹ıÂËãĞÖµ */
 
 #endif

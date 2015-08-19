@@ -21,11 +21,13 @@ protected:
 	int idxImgBegin, idxImgEnd;
 	/** \var 当前运行中的图像序号 */
 	int idxImgCur;
+	int cntRunOk;
 protected:
 	/** \var 画布对象 */
 	CanvasDrawer cDrawer;
 	/** \var GroundTruth路径辅助器 */
 	PoseHelper pHelper;
+	PoseHelper pVisio;
 	bool bIsInRotate;
 
 	// 数据历史记录
@@ -33,15 +35,17 @@ protected:
 	std::vector<FeatureState*> vecKeyFrameFeatures; /** \var 关键帧特征记录(KeyP,P,Descrip) */
 	std::deque<FeatureState*> deqFrameFeatures; /** \var 最近帧队列 */
 	std::vector< std::map<int, MotionState>> vecMotionLinks; /** \var 某帧到之前某帧的 运动状态 */
-
+	std::vector<int> vecEnableIdxs; /** 可用标号 */
 protected:
 	/** 
 	 *	\fn 从最近帧队列和关键帧数组中 选出一定数量帧序列以供匹配  
 	 *	允许的序号小于 \var idxImg; 可以用虚函数扩充不同的选择方法
 	 */
 	virtual std::vector<FeatureState*> selectKeySequence(int idxImg = -1);
-	virtual int filterMotions(std::vector<MotionState>& vecMotion);
+	virtual int filterMotions(std::vector<MotionState>& vecMotion, double oldDegreeT);
 	virtual void updateKeyList(FeatureState* ptrFeature);
+	virtual bool limitRotationDiff(MotionState& curMotion, double limit); /** 判定位移偏差 */
+	virtual bool limitScaleDiff(MotionState& curMotion,double& curScale, double limit);
 public:
 
 	/** \fn 对第一帧需要的数据进行初始化 */
@@ -53,6 +57,10 @@ public:
 	void showFrameMotion();
 
 	void showTrack();
+
+	void lm();
+
+
 };
 
 #endif

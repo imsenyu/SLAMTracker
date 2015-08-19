@@ -132,8 +132,8 @@ double ScaleEstimator::calcScaleRatio(int flag) {
 			printf("]\nplot3(g(:,1),g(:,2),g(:,3),'r.');\n");
 			printf("========Y list========END\n");*/
 		for (int i = 0; i < sizePoint - 2; i++) {
-			if (std::abs(vecPoints[i].y - vecPoints[i + 1].y) / vecPoints[i].y < 0.03f && 
-				std::abs(vecPoints[i+1].y - vecPoints[i + 2].y) / vecPoints[i+1].y < 0.03f
+			if (std::abs(vecPoints[i].y - vecPoints[i + 1].y) / vecPoints[i].y < 0.06f && 
+				std::abs(vecPoints[i+1].y - vecPoints[i + 2].y) / vecPoints[i+1].y < 0.06f
 				) {
 				cv::Point3d normal = vecPoints[i].cross(vecPoints[i + 1]);
 				normal.x /= cv::norm(normal);
@@ -145,12 +145,71 @@ double ScaleEstimator::calcScaleRatio(int flag) {
 			}
 		}
 		for (int i = 0; i < sizePoint - 2; i++) {
-			if (std::abs(vecPoints[i].y - vecPoints[i + 1].y) / vecPoints[i].y < 0.03f 
+			if (std::abs(vecPoints[i].y - vecPoints[i + 1].y) / vecPoints[i].y < 0.06f 
 				) {
 				retScale = vecPoints[i].y;
 				break;
 			}
 		}
+	}
+	else {
+		//采用libviso2 的 bsetPlane方法，
+		double motion_threshold = 1.0f;
+
+		//然后再 选一个 median
+		std::vector<double> distSort;
+		for (int idx = 0; idx < sizePoint; idx++) {
+				double _dist = 0;
+				for (int j = 0; j < 3; j++)
+					_dist += std::abs(matIntersection.at<double>(j, idx));
+				distSort.push_back(_dist);
+		}
+		std::sort(distSort.begin(), distSort.end());
+		int lenMedian = distSort.size() / 2;
+		double median = distSort[lenMedian-1];
+
+		double sigma = median / 50;
+		double weight = 1.0 / (2.0*sigma*sigma);
+		double best_sum = 0;
+		int best_idx = -1;
+
+		for (int idx = 0; idx < sizePoint; idx++) {
+			if (matIntersection.at<double>(1, idx) > 0) {
+				double sum = 0;
+				for (int jdx = 0; jdx < sizePoint; jdx++) {
+					
+						double dist = matIntersection.at<double>(1, idx) - matIntersection.at<double>(1, jdx);
+						sum += std::exp(-dist*dist*weight);
+					
+				}
+				if (sum > best_sum) {
+					best_sum = sum;
+					best_idx = idx;
+				}
+			}
+
+		}
+		
+		//std::cout << matIntersection.t() << std::endl;
+		std::fstream fs;
+		fs.open(cv::format("./Output/m%d_%d.m", ptrMotion[0]->idxImg[0], ptrMotion[0]->idxImg[1]),std::ios_base::out);
+		fs << "m=" << matIntersection.t() << ";" <<std::endl;
+		fs << " plot3(m(:,1)',m(:,2)',m(:,3)','r.'); hold on;" << std::endl;
+		fs << cv::format("plot3(m(%d,1),m(%d,2),m(%d,3),'b*');", best_idx+1, best_idx+1, best_idx+1) << std::endl;
+		if (best_idx > -1) {
+			retScale = matIntersection.at<double>(1, best_idx);
+			double m2 = calcScaleRatio(0);
+			if (m2 > CFG_dScaleRatioLimitBottom)
+				retScale = (m2 + retScale) / 2;
+			printf("SCALE[%d]=%f  :::  %f\n", best_idx, retScale, m2 );
+			return retScale;
+		}
+		else {
+			printf("计算失败\n");
+			return calcScaleRatio(0);
+		}
+
+
 	}
 	//else {
 	//	//换一种，先按照y排序，然后三个三个 算平面，选择比较平的那些平面.
@@ -405,3 +464,26 @@ cv::Mat ScaleEstimator::transformIn2Coord(int pntNum, int preIdx, int curIdx) {
 //
 //	return maxY;
 //}
+
+int ScaleEstimator::triangulate() {
+	bool _isLogData = true;
+	bool _isWriteInfomation = false;
+
+	printf("=========Scale Compute=========\n");
+	//Need at least 3 Frames' Data
+	// Means 2 Motions' Data
+	if (ptrMotion[0] == NULL) return 0;
+	int pair2Cnt = ptrMotion[0]->mapPairPoints.size();
+	if (pair2Cnt < 10) return 0;
+
+	//////////////////////////////////////////////////////////////////////////
+	getPairPoints2();
+	cv::Mat transMask;
+	transMask = transformIn2Coord(pair2Cnt, 0, 1);
+
+	int ret = 0;
+	for (int i = 0; i < pair2Cnt; i++) {
+		ret += matIntersection.at<double>(2, i) > 0;
+	}
+	return ret;
+}
