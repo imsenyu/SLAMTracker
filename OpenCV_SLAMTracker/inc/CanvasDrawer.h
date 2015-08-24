@@ -27,7 +27,7 @@ public:
 	std::fstream fileTraceRecord; /** \var 路径记录文件 */
 	PoseHelper* ptrPoseHelper; /** \var GroundTruth数据辅助对象指针,默认NULL */
 	int idxImgBegin; /** \var 绘制起始idxImg */
-
+	std::deque<double> qDist;
 public:
 	/**	\fn 设置路径记录文件地址 
 	 *	\param recordFilePath 文件路径

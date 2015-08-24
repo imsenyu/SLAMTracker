@@ -52,7 +52,7 @@ int FeatureState::detectExtractFeatures(
 	vecFeaturePoints.clear();
 	for (auto& kpt : vecKeyPoints)
 		vecFeaturePoints.push_back(kpt.pt);
-
+	if (CFG_bIsLogGlobal)
 	if (_isLogData)
 		printf("detect keypoint.size=%d\n", vecFeaturePoints.size());
 

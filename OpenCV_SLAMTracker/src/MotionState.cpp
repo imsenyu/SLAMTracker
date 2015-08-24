@@ -2,9 +2,9 @@
 
 
 MotionState::MotionState():
-inited(false),
+inited(false)/*,
 degreeR(-100),
-degreeT(-100)
+degreeT(-100)*/
 {
 }
 
@@ -22,3 +22,19 @@ std::ostream& operator<<(std::ostream& out, const MotionState& ms) {
 	return out;
 }
 
+double MotionState::getDegree(const std::string& str) {
+	double ret = 0.0f;
+	
+	switch (str[0]) {
+	case 'R':case 'r': {
+				 cv::Mat rotationDir = matR * Const::mat31_001;
+				 ret = Utils::getRodriguesRotation(rotationDir, cv::Mat());
+	}	break;
+	case 'T':case 't': {
+				 ret = Utils::getRodriguesRotation(matT, cv::Mat());
+	}   break;
+	default: 
+		throw std::exception("´íÎóµ÷ÓÃ", 1);
+	}
+	return ret;
+}

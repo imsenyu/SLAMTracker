@@ -109,6 +109,7 @@ void FrameParser::match(double opThreshold) {
 		vecPairPoint[1].push_back(vecFeaturePoints[1][match.trainIdx]);
 	}
 
+	if (CFG_bIsLogGlobal)
 	if (true || _isLogData)
 		printf("BFMatch.size=%d\n", vecBFMatches.size());
 
@@ -116,6 +117,7 @@ void FrameParser::match(double opThreshold) {
 	validPointsByOpticalFlow(opThreshold);
 
 	//打一遍像素点的 差值
+	if (CFG_bIsLogGlobal)
 	printf("poin-pair distance\n");
 	std::vector<int> vecTmpIdx[2];
 	
@@ -169,6 +171,7 @@ void FrameParser::validPointsByOpticalFlow(double threshold) {
 	std::vector<float> vecOpticalErr; 
 
 	if (_isTimeProfile) TIME_BEGIN("optical-flow");
+	if (CFG_bIsLogGlobal)
 	printf("%d %d %d %d\n", matOrignImage[0].rows,
 		matOrignImage[1].rows,
 		vecPairPoint[0].size(), vecPairPoint[1].size());
@@ -369,6 +372,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 
 	cv::Mat matFundamental, matFundStatus;
 
+	if (CFG_bIsLogGlobal)
 	if (_isLogData)
 		printf("Optical Pair[0].size=%d Pair[1].size=%d\n", vecPairPoint[0].size(), vecPairPoint[1].size());
 
@@ -385,7 +389,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 
 		//Extra Show
 		//ShowFundamentDirection(matE.clone());
-
+		if (CFG_bIsLogGlobal)
 		if (_isLogData) {
 			printf("FundamentalMatrix=");
 			std::cout << matFundamental << std::endl;
@@ -414,7 +418,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 				matU = -matU;
 			if (cv::determinant(matVT) < 0)
 				matVT = -matVT;
-
+			if (CFG_bIsLogGlobal)
 			if (_isLogData) {
 				printf("SVD\n");
 				std::cout << matU << std::endl << matS << std::endl << matVT << std::endl;
@@ -438,6 +442,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 
 				if (matT[i].at<double>(2, 0) < 0.0f)  matT[i] = -matT[i];
 
+				if (CFG_bIsLogGlobal)
 				if (false&& _isLogData) {
 					printf("i=%d\n R=\n", i);
 					std::cout << matR[i] << std::endl;
@@ -454,6 +459,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			for (int i = 0; i < 4; i++) {
 				cv::Mat tmp = (matR[i] * Const::mat31_100);
 				compSEL[i] = tmp.at<double>(0, 0);
+				if (CFG_bIsLogGlobal)
 				if ( _isLogData )
 					printf("valid[%d] = %f\n", i, compSEL[i]);
 			}
@@ -465,24 +471,25 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 				}
 			}
 
-			if (compSEL[0] > 0 && compSEL[1] > 0){
-				// 三角测量
-				ScaleEstimator sEstimator;
-				motion.matT = matT[0].clone();
-				int num_inlier = 0;
-				
-				for (int i = 0; i < 2; i++) {
-					motion.matR =  matR[i].clone();
-					sEstimator.updateMotion(&motion);
-					int num = sEstimator.triangulate();
-					if (num > num_inlier) {
-						selectDirectionIdx = i;
-						num_inlier = num;
-					}
-					printf("[%d]=%d\n", i, num);
-				}		
-			}
-
+			//if (compSEL[0] > 0 && compSEL[1] > 0){
+			//	// 三角测量
+			//	ScaleEstimator sEstimator;
+			//	motion.matT = matT[0].clone();
+			//	int num_inlier = 0;
+			//	
+			//	for (int i = 0; i < 2; i++) {
+			//		motion.matR =  matR[i].clone();
+			//		sEstimator.updateMotion(&motion);
+			//		int num = sEstimator.triangulate();
+			//		if (num > num_inlier) {
+			//			selectDirectionIdx = i;
+			//			num_inlier = num;
+			//		}
+			//		if (CFG_bIsLogGlobal)
+			//		printf("[%d]=%d\n", i, num);
+			//	}		
+			//}
+			if (CFG_bIsLogGlobal)
 			printf("selectDirectionIdx=%d\n", selectDirectionIdx);
 			motion.matR = matR[selectDirectionIdx].clone();
 			motion.matT = matT[0].clone();
@@ -497,10 +504,10 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 		//TODO： 解挂了返回直线，点数不够返回 跳帧。
 	}
 
-	//判定一下 如果 matT的增量角度
-	if(true){
-		motion.degreeT = Utils::getRodriguesRotation(motion.matT, cv::Mat());
-	}
+	////判定一下 如果 matT的增量角度
+	//if(true){
+	//	motion.degreeT = Utils::getRodriguesRotation(motion.matT, cv::Mat());
+	//}
 
 	///输出图像的 角度
 	/*if (_isShowImage) {
@@ -593,8 +600,10 @@ FrameParser::FrameParser(FeatureState* prePtr, FeatureState* curPtr) {
 		matOrignImage[idx] = vecPtr[idx]->matImage;
 	}
 
-	printf("======== FrameParser ========\n");
-	printf("Pre:%d Cur:%d\n", preImgIdx, curImgIdx);
-	printf("matImg[0]:%d; matImg[1]:%d\n", matOrignImage[0].rows, matOrignImage[1].rows);
+	if (CFG_bIsLogGlobal) {
+		printf("======== FrameParser ========\n");
+		printf("Pre:%d Cur:%d\n", preImgIdx, curImgIdx);
+		printf("matImg[0]:%d; matImg[1]:%d\n", matOrignImage[0].rows, matOrignImage[1].rows);
+	}
 
 }

@@ -10,6 +10,7 @@ extern std::map<std::string, double> mapTBegin;
 /** \def 时间统计开始定义 */
 #define TIME_BEGIN(cstr) {\
 	std::string STR = std::string(cstr);\
+	if (CFG_bIsLogGlobal)\
 	std::cout << "-----------Time_Begin[" << STR << "]:" << std::endl;\
 	if (mapTBegin.find(STR) == mapTBegin.end()) mapTBegin.insert(make_pair(STR, clock()));\
 	else mapTBegin.find(STR)->second = clock();\
@@ -18,8 +19,12 @@ extern std::map<std::string, double> mapTBegin;
 /** \def 时间统计结束定义 */
 #define TIME_END(cstr) {\
 	std::string STR = std::string(cstr);\
-	if (mapTBegin.find(STR) == mapTBegin.end()) std::cout << "-----------Time_End[" << STR << "] ERROR" << std::endl;\
-	else std::cout << "-----------Time_End[" << STR << "]:(" << clock() - mapTBegin.find(STR)->second << ")ms" << std::endl;\
+	if (mapTBegin.find(STR) == mapTBegin.end())\
+	if (CFG_bIsLogGlobal)\
+	std::cout << "-----------Time_End[" << STR << "] ERROR" << std::endl;\
+	else \
+	if (CFG_bIsLogGlobal)\
+	std::cout << "-----------Time_End[" << STR << "]:(" << clock() - mapTBegin.find(STR)->second << ")ms" << std::endl; \
 }
 
 /**
@@ -39,7 +44,7 @@ namespace Utils {
 	bool loadCommandLine(int argc, char* argv[]);
 
 	/** \fn 根据 \var format 参数输出当前时间 */
-	std::string getTimeNow(std::string format = "%Y_%m_%d_%H_%M");
+	std::string getTimeNow(std::string format = "%Y_%m_%d_%H_%M_%S");
 
 	/** \fn cv::Mat(3,1,CV_F64C1) to cv::Point3d */
 	cv::Point3d transform(cv::Mat& mat31);

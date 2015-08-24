@@ -99,9 +99,11 @@ void CanvasDrawer::initAnimate(PoseState& initPose) {
 
 	// 绘制初始点
 	cv::circle(matCanvas, gPointBase + cv::Point2f(gPose.pos.x, -gPose.pos.z), 2, cv::Scalar(-1));
+	if (ptrPoseHelper != NULL && ptrPoseHelper->inited())
+		logPose(gPose, gPose);
 
-	cv::imshow("Canvas", matCanvas);
-	cv::imshow("Scale", matScale);
+	cv::imshow(cv::format("%s-%s", "Canvas", CFG_sDataName.c_str()), matCanvas);
+	cv::imshow(cv::format("%s-%s","Scale", CFG_sDataName.c_str()), matScale);
 	cv::waitKey(100);
 	inited = true;
 }
@@ -140,9 +142,10 @@ void CanvasDrawer::drawCanvas(PoseState& curPose, bool _isTruth){
 	//更新 gPose到新的坐标
 	
 
-	cv::imshow("Canvas", matTmpCanvas);
+	cv::imshow(cv::format("%s-%s", "Canvas", CFG_sDataName.c_str()), matTmpCanvas);
 	cv::waitKey(1);
-	logPose(curPose, gPose);
+	if ( ptrPoseHelper != NULL && ptrPoseHelper->inited() )
+		logPose(curPose, gPose);
 
 	if (curPose.idxImg/100 != gPose.idxImg/100) {
 		cv::imwrite(recordFilePath + ".png", matTmpCanvas);
@@ -158,12 +161,17 @@ void CanvasDrawer::logPose(PoseState& curPose, PoseState& prePose) {
 	cv::line(matScale, cv::Point2i(curPose.idxImg, 0), cv::Point2i(curPose.idxImg, (int)(cv::norm(curPose.pos-prePose.pos) * 100)), cv::Scalar(0, 0, 0));
 	cv::circle(matScale, cv::Point2i(curPose.idxImg, 100 * cv::norm(ptrPoseHelper->getPosition(curPose.idxImg, prePose.idxImg))), 1, cv::Scalar(255, 0, 255), 1);
 	cv::flip(matScale, tmpScale, 0);
-	cv::imshow("Scale", tmpScale);
+	cv::imshow(cv::format("%s-%s", "Scale", CFG_sDataName.c_str()), tmpScale);
+
+	if (curPose.idxImg - prePose.idxImg > 1) {
+		printf("Log: %d,%d\n", curPose.idxImg, prePose.idxImg);
+	}
 
 	for (int i = 0; i < nFrame; i++) {
-		double tx = (curPose.pos.x - prePose.pos.x)*(i + 1)*(1.0f / nFrame) + prePose.pos.x,
-			ty = (curPose.pos.y - prePose.pos.y)*(i + 1)*(1.0f / nFrame) + prePose.pos.y,
-			tz = (curPose.pos.z - prePose.pos.z)*(i + 1)*(1.0f / nFrame) + prePose.pos.z;
+		double tx, ty, tz;
+		tx = (curPose.pos.x - prePose.pos.x)*(1)*(1.0f / nFrame);// +prePose.pos.x,
+		ty = (curPose.pos.y - prePose.pos.y)*(1)*(1.0f / nFrame);// +prePose.pos.y,
+		tz = (curPose.pos.z - prePose.pos.z)*(1)*(1.0f / nFrame); //+prePose.pos.z;
 		//cv::Mat tDir(3, 1, CV_64FC1), oDir(3, 1,  CV_64FC1);
 		//tDir.at<double>(0,0) = (curPose.dir.x - prePose.dir.x)*(i + 1)*(1.0f / nFrame) + prePose.dir.x;
 		//tDir.at<double>(1, 0) = (curPose.dir.y - prePose.dir.y)*(i + 1)*(1.0f / nFrame) + prePose.dir.y;
@@ -177,7 +185,15 @@ void CanvasDrawer::logPose(PoseState& curPose, PoseState& prePose) {
 
 		//cv::Mat tRot;
 		//Utils::getRodriguesRotation(tDir, tRot, oDir);
+		qDist.push_back(cv::norm(cv::Point3d(tx, ty, tz)));
 
+		tx = (curPose.pos.x - prePose.pos.x)*(i + 1)*(1.0f / nFrame) + prePose.pos.x;
+		ty = (curPose.pos.y - prePose.pos.y)*(i + 1)*(1.0f / nFrame) + prePose.pos.y;
+		tz = (curPose.pos.z - prePose.pos.z)*(i + 1)*(1.0f / nFrame) + prePose.pos.z;
+
+		//fileTraceRecord <<
+		//	cv::norm(cv::Point3d(tx, ty, tz)) << " " <<
+		//cv::norm(ptrPoseHelper->getPosition(prePose.idxImg + i + 1, prePose.idxImg+i)) << std::endl;
 		fileTraceRecord <<
 			curPose.dir3.at<double>(0, 0) << " " << curPose.dir3.at<double>(0, 1) << " " << curPose.dir3.at<double>(0, 2) << " " << tx << " " <<
 			curPose.dir3.at<double>(1, 0) << " " << curPose.dir3.at<double>(1, 1) << " " << curPose.dir3.at<double>(1, 2) << " " << ty << " " <<

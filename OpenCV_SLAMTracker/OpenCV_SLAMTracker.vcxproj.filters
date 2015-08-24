@@ -51,6 +51,9 @@
     <ClInclude Include="inc\ScaleEstimator.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="inc\Skeleton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Config.cpp">
@@ -87,6 +90,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\ScaleEstimator.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Skeleton.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

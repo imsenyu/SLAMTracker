@@ -100,6 +100,7 @@
     <IncludePath>E:\Workspace\OpenCV\opencv2410\build\include;E:\Workspace\OpenCV\opencv2410\build\include\opencv;E:\Workspace\OpenCV\opencv2410\build\include\opencv2;./inc/;$(IncludePath)</IncludePath>
     <LibraryPath>E:\Workspace\OpenCV\opencv2410\build\x64\vc12\staticlib;$(LibraryPath)</LibraryPath>
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)\$(SolutionName)</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -196,6 +197,7 @@
     <ClInclude Include="inc\PoseHelper.h" />
     <ClInclude Include="inc\PoseState.h" />
     <ClInclude Include="inc\ScaleEstimator.h" />
+    <ClInclude Include="inc\Skeleton.h" />
     <ClInclude Include="inc\stdafx.h" />
     <ClInclude Include="inc\TrackRunner.h" />
     <ClInclude Include="inc\Utils.h" />
@@ -211,6 +213,7 @@
     <ClCompile Include="src\PoseHelper.cpp" />
     <ClCompile Include="src\PoseState.cpp" />
     <ClCompile Include="src\ScaleEstimator.cpp" />
+    <ClCompile Include="src\Skeleton.cpp" />
     <ClCompile Include="src\TrackRunner.cpp" />
     <ClCompile Include="src\Utils.cpp" />
   </ItemGroup>

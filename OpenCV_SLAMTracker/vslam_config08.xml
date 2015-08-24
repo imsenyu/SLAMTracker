@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<sPathImageLoad>"../../../Dataset/08/image_0/%06d.png"</sPathImageLoad>
+<sPathCacheFeature>"../../../Features/08/features_%d_%d.xml"</sPathCacheFeature>
+<sPathPoseGroutTruth>"./Poses/08.txt"</sPathPoseGroutTruth>
+<sModeExecute>track</sModeExecute>
+<bIsIgnoreDrawAxisY>1</bIsIgnoreDrawAxisY>
+<iImageBeginIdx>0</iImageBeginIdx>
+<iImageEndIdx>4070</iImageEndIdx>
+<bIsCacheFeature>1</bIsCacheFeature>
+<bIsUseCacheFeature>1</bIsUseCacheFeature>
+<iMaxFeatures>1500</iMaxFeatures>
+<dDrawFrameStep>1.</dDrawFrameStep>
+<dScaleRatioLimitBottom>5.0000000000000000e-001</dScaleRatioLimitBottom>
+<dScaleRatioLimitTop>50.</dScaleRatioLimitTop>
+<dScaleRatioErrorDefault>5.0000000000000000e-001</dScaleRatioErrorDefault>
+<dRotationDiffLimit>5.</dRotationDiffLimit>
+<bIsLimitRotationDiff>1</bIsLimitRotationDiff>
+<bIsUseGroundTruthDistance>1</bIsUseGroundTruthDistance>
+<dScaleInvIncreaseDiffLimit>1.0000000000000002e-001</dScaleInvIncreaseDiffLimit>
+<mCameraParameter type_id="opencv-matrix">
+  <rows>3</rows>
+  <cols>3</cols>
+  <dt>d</dt>
+  <data>
+    7.0709119999999996e+002 0. 6.0188729999999998e+002 0.
+    7.0709119999999996e+002 1.8311040000000000e+002 0. 0. 1.</data></mCameraParameter>
+<iDequeFrameNumber>3</iDequeFrameNumber>
+<dOpticalFlowThreshold>2.</dOpticalFlowThreshold>
+<bIsLogGlobal>0</bIsLogGlobal>
+<iPreAverageFilter>3</iPreAverageFilter>
+<sDataName>"08"</sDataName>
+</opencv_storage>

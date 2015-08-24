@@ -2,6 +2,7 @@
 #include "CanvasDrawer.h"
 #include "FrameParser.h"
 #include "ScaleEstimator.h"
+#include "Skeleton.h"
 
 TrackRunner::TrackRunner(int _ImgBeginIdx, int _ImgEndIdx):
 cDrawer(_ImgBeginIdx),
@@ -26,7 +27,7 @@ TrackRunner::~TrackRunner()
 void TrackRunner::initFirstFrame() {
 
 	// 设定输出配置
-	cDrawer.setLogPath(cv::format("./Output/coordOutput_%s.txt", Utils::getTimeNow().c_str()));
+	cDrawer.setLogPath(cv::format("./Output/coordOutput_%s_%s.txt", Utils::getTimeNow().c_str(), CFG_sDataName.c_str()));
 	// 初始化 PoseHelper
 	pHelper.setGroundTruth(CFG_sPathPoseGroutTruth);
 	pVisio.setGroundTruth("./Poses/00_.txt");
@@ -67,9 +68,10 @@ void TrackRunner::initFirstFrame() {
 // 选取一个帧ptr 序列
 int TrackRunner::runKeyStep() {
 
-	printf("////////////////////////////////////////////\n");
+
+	//printf("////////////////////////////////////////////\n");
 	printf("//////////// idxImgCur: %06d ////////////\n",idxImgCur);
-	printf("////////////////////////////////////////////\n");
+	//printf("////////////////////////////////////////////\n");
 
 	TIME_BEGIN("MainLoop");
 
@@ -113,11 +115,13 @@ int TrackRunner::runKeyStep() {
 			vecEnableIdxs[idxImgCur] = cntRunOk;
 			// 运动参数计算失败
 			if (motionStatus == false) {
+				printf("运动参数计算失败\n");
 				continue;
 			}
 
 			// 位移旋转限值
 			if (CFG_bIsLimitRotationDiff && limitRotationDiff(vecCurMotions[idx],CFG_dRotationDiffLimit) == false) {
+				printf("旋转跳\n");
 				vecCurMotions[idx].inited = false;
 				continue;
 			}
@@ -127,28 +131,58 @@ int TrackRunner::runKeyStep() {
 			sEstimator.updateMotion(&vecCurMotions[idx]);
 			double curScale = sEstimator.computeScaleTransform();
 
+			if (curScale <= 0) {
+				printf("尺度没算出来\n");
+				curScale = 200;
+			}
 			// 尺度增量限制
+			// 如果被跳帧了，跳帧后出现一个多间隔值，在这个间隔值之后，再允许任意一个。
+			// 如果连跳多帧，那
 			if (limitScaleDiff(vecCurMotions[idx], curScale, CFG_dScaleInvIncreaseDiffLimit) == false) {
 				vecCurMotions[idx].inited = false;
 				continue;
 			}
+			int idxDelta = vecCurMotions[idx].idxImg[1] - vecCurMotions[idx].idxImg[0];
+			if (CFG_iPreAverageFilter > 0) {
+				auto& qDist = cDrawer.qDist;
+				auto iter =  qDist.rbegin();
+				double aver = 0.0f;
+				int cnt = 0;
+				for (; cnt < CFG_iPreAverageFilter && iter != qDist.rend(); iter++, cnt++) {
+					printf("%d %f\n", idxImgCur, *iter);
+					aver += *iter;
+				}
+				aver += 1.65f / curScale / idxDelta;
+				aver /= cnt + 1;
+				//if (aver < 1.65f / curScale / idxDelta) {
+					curScale = 1.65 / aver / idxDelta;
+				//}
+			}
 
 			/** TODO: 这里需要一个合适的尺度评价 */
-			int idxDelta = vecCurMotions[idx].idxImg[1] - vecCurMotions[idx].idxImg[0];
-			if (curScale<0 || ( (curScale < CFG_dScaleRatioLimitBottom /*/ idxDelta*/ || curScale > CFG_dScaleRatioLimitTop) )  ) {
-				if (idxDelta > 5) {
-					vecCurMotions[idx].inited = true;
-					if (curScale < CFG_dScaleRatioLimitBottom) {
-						curScale = CFG_dScaleRatioLimitBottom;
-					}
-					else
-						curScale = CFG_dScaleRatioLimitTop;
+			
+			if ((curScale*idxDelta < CFG_dScaleRatioLimitBottom /*/ idxDelta*/ || curScale*idxDelta > CFG_dScaleRatioLimitTop)) {
+				
+				printf("Scale LIMIT %d-%d:%f %f\n", vecCurMotions[idx].idxImg[0],vecCurMotions[idx].idxImg[1], curScale, 1.65f / curScale);
+				if (curScale*idxDelta < CFG_dScaleRatioLimitBottom) {
+					curScale = CFG_dScaleRatioLimitBottom / idxDelta;
 				}
-				else {
-					motionStatus = false;
-					vecCurMotions[idx].inited = false;
-					continue;
-				}
+				else
+					curScale = CFG_dScaleRatioLimitTop / idxDelta;
+
+				//if (idxDelta > 0) {
+				//	vecCurMotions[idx].inited = true;
+				//	if (curScale < CFG_dScaleRatioLimitBottom) {
+				//		curScale = CFG_dScaleRatioLimitBottom;
+				//	}
+				//	else
+				//		curScale = CFG_dScaleRatioLimitTop;
+				//}
+				//else {
+				//	motionStatus = false;
+				//	vecCurMotions[idx].inited = false;
+				//	continue;
+				//}
 				
 			}
 
@@ -192,7 +226,8 @@ int TrackRunner::runKeyStep() {
 			}
 			
 			/** TODO: 需要有个方法判定当前是否在转弯. */
-			if (std::abs(vecCurMotions[0].degreeT) > 7.0f) {
+			if (std::abs(vecCurMotions[0].getDegree("T")) > 7.0f) {
+				if (CFG_bIsLogGlobal)
 				printf("...\n");
 				bIsInRotate = true;
 			}
@@ -204,12 +239,15 @@ int TrackRunner::runKeyStep() {
 			// 对多个计算得到的新位姿,按照等比数列 1/2; 1/4; 1/8进行 加权平均....好low
 			PoseState curPoseState = vecEstiPoses[0];
 			int vecEstLen = vecEstiPoses.size();
+
+			//多个的话 如何差值 dir3 是个问题
 			if (vecEstLen >= 2) {
 				curPoseState.pos = Const::pnt3d_000;
 				curPoseState.dir = Const::pnt3d_000;
 				double pow[] = { 1.0f / 2.0f, 1.0f / 4.0f, 1.0f / 8.0f, 1.0f / 16.0f,1.0f/32,1.0f/64,1.0/128 };
 				
 				for (int idx = 0; idx < vecEstLen; idx++) {
+					
 					curPoseState.pos += vecEstiPoses[idx].pos;// *pow[idx];
 					curPoseState.dir += vecEstiPoses[idx].dir;// *pow[idx];
 				}
@@ -220,7 +258,12 @@ int TrackRunner::runKeyStep() {
 				curPoseState.dir = curPoseState.dir * (1.0f / vecEstLen);
 				curPoseState.dir = curPoseState.dir * (1.0f / cv::norm(curPoseState.dir));
 			}
+			cv::Mat _rtDir(3, 1, CV_64FC1);
+			_rtDir.at<double>(0, 0) = curPoseState.dir.x;
+			_rtDir.at<double>(1, 0) = curPoseState.dir.y;
+			_rtDir.at<double>(2, 0) = curPoseState.dir.z;
 
+			Utils::getRodriguesRotation(_rtDir, curPoseState.dir3);
 			// 更新队列和关键帧
 			updateKeyList(ptrCurFeature);
 			cntRunOk++;
@@ -228,11 +271,59 @@ int TrackRunner::runKeyStep() {
 			vecPoses[idxImgCur] = curPoseState;
 
 			TIME_END("PoseEstimate");
-
+			//if (CFG_bIsLogGlobal)
 			std::cout << vecPoses[idxImgCur] << std::endl;
 			// 画布画出当前位姿, 以及GroundTruth实际路径
 			// 内部修改 vecPoses 的数据，不能用 curPoseState 了
 			cDrawer.drawCanvas(vecPoses[idxImgCur]);
+
+			if (false && idxImgCur == 50) {
+				printf("开始调整\n");
+
+				Skeleton skl;
+				skl.initData(vecPoses, vecMotionLinks);
+				double err = skl.calcError();
+				double preErr = err;
+				printf("i=%d err=%f\n", -1, err);
+				if (CFG_bIsLogGlobal)
+				std::cout << skl.vecX[0] << std::endl;
+				if (CFG_bIsLogGlobal)
+				std::cout << skl.vecX[1] << std::endl;
+				for (int i = 0; i < 1000; i++) {
+					skl.calcDiff();
+					skl.merge(1e-3);
+					skl.fixMatrix();
+					err = skl.calcError();
+					
+					printf("i=%d err=%f\n", i, err);
+					if (CFG_bIsLogGlobal)
+					std::cout << skl.vecX[0] << std::endl;
+					if (CFG_bIsLogGlobal)
+					std::cout << skl.vecX[1] << std::endl;
+					if (preErr< err) {
+						break;
+					}
+					preErr = err;
+				}
+				
+				for (int i = idxImgBegin + 1; i < idxImgCur; i++) {
+					if ( skl.vecX[i].rows) {
+						PoseState t(i);
+						t.inited = true;
+						t.pos.x = skl.vecX[i].at<double>(0, 0);
+						t.pos.y = skl.vecX[i].at<double>(1, 0);
+						t.pos.z = skl.vecX[i].at<double>(2, 0);
+						if (CFG_bIsLogGlobal)
+						std::cout << t.pos << std::endl;
+					}
+
+				}
+				cv::waitKey();
+
+				printf("结束调整\n");
+			}
+
+
 		}
 
 	TIME_END("MainLoop");
@@ -322,6 +413,7 @@ void TrackRunner::lm() {
 
 	for (int i = 0; i < vecMotionLinks.size(); i++) {
 		if (vecPosesBack[i].inited == false) break;
+		if (CFG_bIsLogGlobal)
 		std::cout << vecPosesBack[i] << std::endl;
 	}
 
@@ -332,7 +424,9 @@ void TrackRunner::lm() {
 			int idxPre = pair.first;
 			MotionState& motion = pair.second;
 
+			if (CFG_bIsLogGlobal)
 			printf("Motion[%d-%d]\n", idxPre, idxCur);
+			if (CFG_bIsLogGlobal)
 			std::cout << motion << std::endl;
 
 		}
@@ -365,20 +459,20 @@ bool TrackRunner::limitRotationDiff(MotionState& curMotion, double limit) {
 	isSkipBetweenPre2AndPre3 = (idxPre2 - idxPre3) - (vecEnableIdxs[idxPre2] - vecEnableIdxs[idxPre3]) > 0;
 	isSkipFrames = isSkipBetweenCurAndPre1 || isSkipBetweenPre1AndPre2 || isSkipBetweenPre2AndPre3;
 
-	//下面针对跳帧进行判定
 
-	printf("可用标号%d-%d: %d-%d\n", idxCur, idxPre1, vecEnableIdxs[idxCur], vecEnableIdxs[idxPre1]);
-	if (vecEnableIdxs[idxCur] - vecEnableIdxs[idxPre1] <= CFG_iDequeFrameNumber && idxCur - idxPre1 > CFG_iDequeFrameNumber) {
-		printf("\n");
+	double preDelta = (preMotion1.getDegree("T") - preMotion2.getDegree("T")) / (idxPre1 - idxPre2),
+		curDelta = (curMotion.getDegree("T") - preMotion1.getDegree("T")) / (idxCur - idxPre1);
+
+	if (  idxCur - idxPre1  > vecEnableIdxs[idxCur] - vecEnableIdxs[idxPre1] ) {
+		printf("之前跳帧 ，允许 cur(%d:%f %d:%f): %f  pre(%d:%f %d:%f): %f\n", 
+			idxCur, curMotion.getDegree("T"), idxPre1, preMotion1.getDegree("T"), curDelta,
+			idxPre1, preMotion1.getDegree("T"), idxPre2, preMotion2.getDegree("T"), preDelta);
 		return true;
 	}
 
 
-	double preDelta = (preMotion1.degreeT - preMotion2.degreeT) / (idxPre1 - idxPre2),
-		curDelta = (curMotion.degreeT - preMotion1.degreeT) / (idxCur - idxPre1);
-
 	if (std::abs(curDelta - preDelta) > limit) {
-		printf("[%d-%d] Rotation Error\n",idxPre1, idxCur);
+		printf("Rotation Error %d:%f %d:%f \n", idxPre1, preDelta, idxCur, curDelta);
 		return false;
 	}
 
@@ -389,19 +483,61 @@ bool TrackRunner::limitScaleDiff(MotionState& curMotion, double& curScale, doubl
 	int idxCur = curMotion.idxImg[1],
 		idxPre1 = curMotion.idxImg[0],
 		idxPre2;
+	int isSkipBetweenCurAndPre1;
+	int isSkipBetweenPre1AndPre2;
+
+	bool isLimitTop = true,
+		isLimitBottom = true;
 
 	if (idxPre1 == 0) return true;
-	if (vecEnableIdxs[idxCur] - vecEnableIdxs[idxPre1] <= CFG_iDequeFrameNumber && idxCur - idxPre1 > CFG_iDequeFrameNumber) return true;
 	MotionState &preMotion1 = vecMotionLinks[idxPre1].rbegin()->second;
 
 	idxPre2 = preMotion1.idxImg[0];
-	if (idxCur - idxPre1 > 1) return true;
-	double curDelta = 1.65f / curScale / (idxCur - idxPre1) - 1.65f / preMotion1.scale / ( idxPre1 -idxPre2);
+	
+	isSkipBetweenCurAndPre1 = (idxCur - idxPre1) - (vecEnableIdxs[idxCur] - vecEnableIdxs[idxPre1]) ;
+	isSkipBetweenPre1AndPre2 = (idxPre1 - idxPre2) - (vecEnableIdxs[idxPre1] - vecEnableIdxs[idxPre2]) ;
+	
+	printf("Scale Skip[%d-%d-%d] %d,%d\n", idxCur, idxPre1, idxPre2, isSkipBetweenCurAndPre1, isSkipBetweenPre1AndPre2);
 
-	if (std::abs(curDelta ) > limit) {
-		printf("[%d-%d] Scale Error \n", idxPre1, idxCur);
+	//当前跳1个，前一个跳0个
+	if (isSkipBetweenCurAndPre1 == 1 && isSkipBetweenPre1AndPre2 == 0) {
+		//按当前比例算
+		//isLimitTop = true;
+		//isLimitBottom = false;
+	}
+	//当前连跳2个了，允许
+	else if (isSkipBetweenCurAndPre1 > 1 && isSkipBetweenPre1AndPre2 == 0) {
+		return true;
+	}
+	//当前没跳，之前跳了>0个
+	else if ( isSkipBetweenCurAndPre1 == 0 && isSkipBetweenPre1AndPre2 > 0) {
+		return true;
+	}
+	//当前跳了几个，之前跳了几个
+	else if (isSkipBetweenCurAndPre1 > 0 && isSkipBetweenPre1AndPre2 > 0) {
+		return true;
+	}
+
+	//double curDelta = (1.65f / curScale / (idxCur - idxPre1)) / (1.65f / preMotion1.scale / (idxPre1 - idxPre2));
+	double curDelta = (1.65f / curScale / (idxCur - idxPre1)) - (1.65f / preMotion1.scale / (idxPre1 - idxPre2));
+
+	isLimitTop = (1.65f / curScale / (idxCur - idxPre1)) > 1.0f;
+	isLimitBottom = (1.65f / preMotion1.scale / (idxPre1 - idxPre2)) < 0.5f;
+
+	//if (std::abs(curDelta - 1.0f) > limit) {
+	if (std::abs(curDelta ) > 1.2f* limit) {
+		if (std::abs(curDelta) > limit)
+		printf("Scale Error %d-%d:%f %f    %d-%d:%f %f\n", 
+			idxPre2, idxPre1, preMotion1.scale*(idxPre1 - idxPre2), 1.65f / preMotion1.scale / (idxPre1 - idxPre2), 
+			idxPre1, idxCur, curScale*(idxCur - idxPre1), 1.65f / curScale / (idxCur - idxPre1));
+		////double sign = curDelta > 1.0f ? +1.0f : -1.0f;
 		double sign = curDelta > 0 ? +1.0f : -1.0f;
-		curScale = 1.65f / (idxCur - idxPre1) / (1.65f / preMotion1.scale / (idxPre1 - idxPre2) + sign * limit);
+		if (sign > 0 && isLimitTop == false) return true;
+		if (sign < 0 && isLimitBottom == false) return true;
+
+		////curScale = 1.65f / (idxCur - idxPre1) / (1.65f / preMotion1.scale / (idxPre1 - idxPre2) * sign *(limit+1.0f));
+		
+		curScale = 1.65f / (idxCur - idxPre1) / (1.65f / preMotion1.scale / (idxPre1 - idxPre2) +sign *(limit));
 		return true;
 	}
 

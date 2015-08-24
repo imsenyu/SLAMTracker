@@ -11,28 +11,37 @@ double Utils::getRodriguesRotation(cv::Mat _rtDir, cv::Mat& matRotation, cv::Mat
 	cv::Mat matUnitVector = _oriDir.clone();
 	cv::Mat rtDir = _rtDir / cv::norm(_rtDir);
 
-	if (_isLogData)std::cout << matUnitVector << std::endl;
+	if (CFG_bIsLogGlobal)
+	if (_isLogData)
+		std::cout << matUnitVector << std::endl;
 
 	double thetaInR = 0.0f;
 	thetaInR = (matUnitVector.dot(rtDir)) / std::sqrt(matUnitVector.dot(matUnitVector)) / std::sqrt(rtDir.dot(rtDir));
 
+	if (CFG_bIsLogGlobal)
 	if (_isLogData) std::cout << thetaInR << std::endl;
 	if (abs(thetaInR) > 1 - 1e-7) {
 		matRotation = cv::Mat(3, 3, CV_64FC1);
 		matRotation = 0.0f;
+		if (CFG_bIsLogGlobal)
 		if (_isLogData) std::cout << matRotation << std::endl;
 		matRotation.at<double>(0, 0) = matRotation.at<double>(1, 1) = matRotation.at<double>(2, 2) = 1.0f;
+		if (CFG_bIsLogGlobal)
 		if (_isLogData) std::cout << matRotation << std::endl;
 		return 0.0f;
 	}
 
 	matUnitVector = matUnitVector.cross(rtDir);
+	if (CFG_bIsLogGlobal)
 	if (_isLogData) std::cout << matUnitVector << std::endl;
 	matUnitVector = (matUnitVector / cv::norm(matUnitVector))* std::acos(thetaInR)*ratio;
+	if (CFG_bIsLogGlobal)
 	if (_isLogData) std::cout << matUnitVector << std::endl;
 
 	cv::Rodrigues(matUnitVector, matRotation);
+	if (CFG_bIsLogGlobal)
 	if (_isLogData) std::cout << matUnitVector << std::endl;
+	if (CFG_bIsLogGlobal)
 	if (_isLogData) std::cout << matRotation << std::endl;
 
 	return std::acos(thetaInR)*180.0f / std::acos(-1) * (rtDir.at<double>(0,0) >0 ? 1.0f : -1.0f );
@@ -78,6 +87,9 @@ bool Utils::loadCommandLine(int argc, char* argv[]) {
 	CFG_mCameraParameter		= Utils::configDefault<cv::Mat>(Const::mat33_111.clone(), fs["mCameraParameter"]);
 	CFG_iDequeFrameNumber		= Utils::configDefault<int>(2, fs["iDequeFrameNumber"]);
 	CFG_dOpticalFlowThreshold = Utils::configDefault<double>(2.0f, fs["dOpticalFlowThreshold"]);
+	CFG_bIsLogGlobal			= Utils::configDefault<int>(0, fs["bIsLogGlobal"]);
+	CFG_iPreAverageFilter = Utils::configDefault<int>(1, fs["iPreAverageFilter"]);
+	CFG_sDataName = Utils::configDefault<std::string>("untitled", fs["sDataName"]);
 	fs.release();
 	fs.open(userDefinedCfg, cv::FileStorage::WRITE);
 
@@ -102,6 +114,9 @@ bool Utils::loadCommandLine(int argc, char* argv[]) {
 	fs << "mCameraParameter"		<< CFG_mCameraParameter;
 	fs << "iDequeFrameNumber"	<< CFG_iDequeFrameNumber;
 	fs << "dOpticalFlowThreshold" << CFG_dOpticalFlowThreshold;
+	fs << "bIsLogGlobal" << CFG_bIsLogGlobal;
+	fs << "iPreAverageFilter" << CFG_iPreAverageFilter;
+	fs << "sDataName" << CFG_sDataName;
 	fs.release();
 
 	return true;

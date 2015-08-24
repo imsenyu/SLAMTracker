@@ -17,7 +17,7 @@ public:
 	int idxImg[2]; /** \var 前后对比两张图片的编号 */
 	bool inited; /** \var 是否初始化 */
 	cv::Mat matR, matT; /** \var 旋转和位移矩阵 */
-	double degreeR, degreeT; /** \var matR和MatT的旋转角 */
+	//double degreeR, degreeT; /** \var matR和MatT的旋转角 */
 	double scale; /** 尺度(到地面距离) */
 	cv::Mat _matR_; /** 持久化matR */
 	/** \var 前后两帧的对应点映射

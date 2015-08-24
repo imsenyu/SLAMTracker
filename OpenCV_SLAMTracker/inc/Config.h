@@ -29,5 +29,7 @@ extern double CFG_dScaleInvIncreaseDiffLimit; /** \var double:位移(尺度倒数)增量
 extern cv::Mat CFG_mCameraParameter; /** \var 相机内参数矩阵 */
 extern int CFG_iDequeFrameNumber; /** \var int:历史队列中的帧数限制 */
 extern double CFG_dOpticalFlowThreshold; /** \var double:光流过滤阈值 */
-
+extern int CFG_bIsLogGlobal; /** 全局log */
+extern int CFG_iPreAverageFilter; /** 前向均值滤波系数 */
+extern std::string CFG_sDataName; /** 数据集名称 */
 #endif

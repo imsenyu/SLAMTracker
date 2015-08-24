@@ -15,6 +15,7 @@ bool ScaleEstimator::updateMotion(MotionState* _ptrCurMotion) {
 
 	ptrMotion[0] = _ptrCurMotion;
 
+	if (CFG_bIsLogGlobal)
 	if (true) {
 		printf("======ScaleEstimator======\n");
 		printf("idxImg = (%d)\n", ptrMotion[0]->idxImg[0]);
@@ -113,6 +114,12 @@ double ScaleEstimator::calcScaleRatio(int flag) {
 		[](const cv::Point3d& a, const cv::Point3d& b)->
 		bool {	return a.y > b.y;  };
 	if (flag == 0) {
+		//std::fstream fs;
+		//fs.open(cv::format("./Output/m%s_%d_%d.m", CFG_sDataName.c_str(), ptrMotion[0]->idxImg[0], ptrMotion[0]->idxImg[1]), std::ios_base::out);
+		//fs << "m=" << matIntersection.t() << ";" << std::endl;
+		//fs << " plot3(m(:,1)',m(:,2)',m(:,3)','r.'); hold on;" << std::endl;
+
+
 		//最普通的方法, 取y最大
 		retScale = -100.0f;
 		std::vector<cv::Point3d> vecPoints;
@@ -144,13 +151,15 @@ double ScaleEstimator::calcScaleRatio(int flag) {
 				break;
 			}
 		}
-		for (int i = 0; i < sizePoint - 2; i++) {
-			if (std::abs(vecPoints[i].y - vecPoints[i + 1].y) / vecPoints[i].y < 0.06f 
+		//if (retScale < 0)
+		for (int i = 0; i < sizePoint - 1; i++) {
+			if (std::abs(vecPoints[i].y - vecPoints[i + 1].y) / vecPoints[i].y < 0.1f 
 				) {
 				retScale = vecPoints[i].y;
 				break;
 			}
 		}
+		
 	}
 	else {
 		//采用libviso2 的 bsetPlane方法，
@@ -300,6 +309,7 @@ double ScaleEstimator::computeScaleTransform() {
 	bool _isLogData = true ;
 	bool _isWriteInfomation = false;
 	
+	if (CFG_bIsLogGlobal)
 	printf("=========Scale Compute=========\n");
 	//Need at least 3 Frames' Data
 	// Means 2 Motions' Data
@@ -398,6 +408,7 @@ cv::Mat ScaleEstimator::transformIn2Coord(int pntNum, int preIdx, int curIdx) {
 			matIntersection.at<double>(row, idxPnt) = tmp.at<double>(row, 0);
 	}
 
+	if (CFG_bIsLogGlobal)
 	if (_isLogData) {
 		//0,1原点,在0坐标系中
 		std::cout << matPosOrign[preIdx] << std::endl;
@@ -469,6 +480,7 @@ int ScaleEstimator::triangulate() {
 	bool _isLogData = true;
 	bool _isWriteInfomation = false;
 
+	if (CFG_bIsLogGlobal)
 	printf("=========Scale Compute=========\n");
 	//Need at least 3 Frames' Data
 	// Means 2 Motions' Data

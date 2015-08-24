@@ -22,3 +22,6 @@ double CFG_dScaleInvIncreaseDiffLimit; // = 0.1f;
 cv::Mat CFG_mCameraParameter;
 int CFG_iDequeFrameNumber;
 double  CFG_dOpticalFlowThreshold;
+int CFG_bIsLogGlobal;
+int CFG_iPreAverageFilter;
+std::string CFG_sDataName;
