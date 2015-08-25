@@ -4,7 +4,7 @@
 <sPathCacheFeature>"../../../Features/05/features_%d_%d.xml"</sPathCacheFeature>
 <sPathPoseGroutTruth>"./Poses/05.txt"</sPathPoseGroutTruth>
 <sModeExecute>track</sModeExecute>
-<bIsIgnoreDrawAxisY>0</bIsIgnoreDrawAxisY>
+<bIsIgnoreDrawAxisY>1</bIsIgnoreDrawAxisY>
 <iImageBeginIdx>0</iImageBeginIdx>
 <iImageEndIdx>2760</iImageEndIdx>
 <bIsCacheFeature>1</bIsCacheFeature>
@@ -17,7 +17,7 @@
 <dRotationDiffLimit>7.</dRotationDiffLimit>
 <bIsLimitRotationDiff>1</bIsLimitRotationDiff>
 <bIsUseGroundTruthDistance>0</bIsUseGroundTruthDistance>
-<dScaleInvIncreaseDiffLimit>6.9999999999999996e-001</dScaleInvIncreaseDiffLimit>
+<dScaleInvIncreaseDiffLimit>1.9999999999999996e-001</dScaleInvIncreaseDiffLimit>
 <mCameraParameter type_id="opencv-matrix">
   <rows>3</rows>
   <cols>3</cols>
@@ -25,7 +25,7 @@
   <data>
     7.0709119999999996e+002 0. 6.0188729999999998e+002 0.
     7.0709119999999996e+002 1.8311040000000000e+002 0. 0. 1.</data></mCameraParameter>
-<iDequeFrameNumber>3</iDequeFrameNumber>
+<iDequeFrameNumber>4</iDequeFrameNumber>
 <dOpticalFlowThreshold>2.</dOpticalFlowThreshold>
 <bIsLogGlobal>0</bIsLogGlobal>
 <iPreAverageFilter>5</iPreAverageFilter>
