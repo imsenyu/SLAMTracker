@@ -16,7 +16,7 @@
 <dScaleRatioErrorDefault>5.0000000000000000e-001</dScaleRatioErrorDefault>
 <dRotationDiffLimit>7.</dRotationDiffLimit>
 <bIsLimitRotationDiff>1</bIsLimitRotationDiff>
-<bIsUseGroundTruthDistance>0</bIsUseGroundTruthDistance>
+<bIsUseGroundTruthDistance>1</bIsUseGroundTruthDistance>
 <dScaleInvIncreaseDiffLimit>1.0000000000000002e-001</dScaleInvIncreaseDiffLimit>
 <mCameraParameter type_id="opencv-matrix">
   <rows>3</rows>

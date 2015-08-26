@@ -18,13 +18,21 @@ public:
 	~CanvasDrawer();
 
 public:
-	cv::Mat matScale;
-	cv::Mat matCanvas;	/** \var 当前画布 */
+	cv::Mat matScaleCanvas;	/** \var 当前scale画布 */
+	cv::Mat matPathCanvas;	/** \var 当前path画布 */
 	PoseState	gPose;	/** \var 上一个需要绘制的点 */
-	cv::Point2f gPointBase; /** \var 绘制相对于画布(x,y)的原点偏移 */
 
-	std::string recordFilePath;
-	std::fstream fileTraceRecord; /** \var 路径记录文件 */
+	/** \var 绘制相对于画布(x,y)的原点偏移
+	 *	其他Point变量都需要加上这个偏移才能画在canvas上
+	 */
+	cv::Point2f gPointBase; 
+
+	std::string recordFilePath; /** \var 路径记录文件路径 */
+
+	/** \var 路径记录文件流对象
+	 *	按照pose要求的12个数据进行记录
+	 */
+	std::fstream fileTraceRecord; 
 	PoseHelper* ptrPoseHelper; /** \var GroundTruth数据辅助对象指针,默认NULL */
 	int idxImgBegin; /** \var 绘制起始idxImg */
 	std::deque<double> qDist;
@@ -46,6 +54,11 @@ public:
 	 */
 	void drawCanvas(PoseState& curPose, bool _isTruth = true);
 private:
+	/**
+	*	\fn 对当前运动姿态进行记录,并且绘制scale
+	*	\param curPose,当前姿态
+	*	\param prePose,上一个姿态
+	*/
 	void logPose(PoseState& curPose, PoseState& prePose);
 };
 

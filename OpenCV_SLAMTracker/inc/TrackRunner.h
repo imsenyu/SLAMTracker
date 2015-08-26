@@ -27,6 +27,7 @@ protected:
 	CanvasDrawer cDrawer;
 	/** \var GroundTruth路径辅助器 */
 	PoseHelper pHelper;
+	/** \var 用于特别指定读取scale，需要做其他修改 */
 	PoseHelper pVisio;
 	bool bIsInRotate;
 
@@ -35,16 +36,35 @@ protected:
 	std::vector<FeatureState*> vecKeyFrameFeatures; /** \var 关键帧特征记录(KeyP,P,Descrip) */
 	std::deque<FeatureState*> deqFrameFeatures; /** \var 最近帧队列 */
 	std::vector< std::map<int, MotionState>> vecMotionLinks; /** \var 某帧到之前某帧的 运动状态 */
-	std::vector<int> vecEnableIdxs; /** 可用标号 */
+	std::vector<int> vecEnableIdxs; /** \var 当前帧是第几个可用帧 */
 protected:
 	/** 
 	 *	\fn 从最近帧队列和关键帧数组中 选出一定数量帧序列以供匹配  
-	 *	允许的序号小于 \var idxImg; 可以用虚函数扩充不同的选择方法
+	 *	\brief 允许的序号小于 \var idxImg; 可以用虚函数扩充不同的选择方法
 	 */
 	virtual std::vector<FeatureState*> selectKeySequence(int idxImg = -1);
+
+	/**
+	 *	\fn 对输入vecMotion进行一定的过滤
+	 */
 	virtual int filterMotions(std::vector<MotionState>& vecMotion, double oldDegreeT);
+	
+	/**
+	 *	\fn 按照一定规则把当前有效帧插入 最近帧队列 和 关键帧数组
+	 *	\brief 目前仅控制 最近帧队列数量
+	 */
 	virtual void updateKeyList(FeatureState* ptrFeature);
+
+	/**
+	 *	\fn 限制每次位移的旋转方向角增量
+	 */
 	virtual bool limitRotationDiff(MotionState& curMotion, double limit); /** 判定位移偏差 */
+	
+	/**
+	 *	\fn 限制位移运动距离的scale关系
+	 *	\brief 具体移动距离=1.65f / scale
+	 *	如果多帧的运动，会按照帧数等价放宽要求
+	 */
 	virtual bool limitScaleDiff(MotionState& curMotion,double& curScale, double limit);
 public:
 
@@ -54,13 +74,9 @@ public:
 	/** \fn 运行每一帧，返回当前帧号 */
 	int runKeyStep(); 
 
-	void showFrameMotion();
-
-	void showTrack();
+	bool hasNext() { return idxImgCur <= idxImgEnd; }
 
 	void lm();
-
-
 };
 
 #endif

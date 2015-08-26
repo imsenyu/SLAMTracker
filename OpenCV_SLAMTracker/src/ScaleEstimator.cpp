@@ -18,7 +18,7 @@ bool ScaleEstimator::updateMotion(MotionState* _ptrCurMotion) {
 	if (CFG_bIsLogGlobal)
 	if (true) {
 		printf("======ScaleEstimator======\n");
-		printf("idxImg = (%d)\n", ptrMotion[0]->idxImg[0]);
+		printf("idxImg = (%d)\n", ptrMotion[0]->getIdxImg(0));
 	}
 
 	return !!ptrMotion[0];
@@ -28,7 +28,7 @@ int ScaleEstimator::getPairPoints2() {
 	bool _isLogData = false;
 	bool _isUpdateData = true;
 
-	auto& mapCur = ptrMotion[0]->mapPairPoints;
+	auto& mapCur = ptrMotion[0]->getMapPairPointsRef();
 	for (int idx = 0; idx < 2; idx++) {
 		matPointUVW[idx] = cv::Mat(3, mapCur.size(), CV_64FC1);
 		matPointUVW[idx] = 1.0f;
@@ -201,7 +201,7 @@ double ScaleEstimator::calcScaleRatio(int flag) {
 		
 		//std::cout << matIntersection.t() << std::endl;
 		std::fstream fs;
-		fs.open(cv::format("./Output/m%d_%d.m", ptrMotion[0]->idxImg[0], ptrMotion[0]->idxImg[1]),std::ios_base::out);
+		fs.open(cv::format("./Output/m%d_%d.m", ptrMotion[0]->getIdxImg(0), ptrMotion[0]->getIdxImg(1)), std::ios_base::out);
 		fs << "m=" << matIntersection.t() << ";" <<std::endl;
 		fs << " plot3(m(:,1)',m(:,2)',m(:,3)','r.'); hold on;" << std::endl;
 		fs << cv::format("plot3(m(%d,1),m(%d,2),m(%d,3),'b*');", best_idx+1, best_idx+1, best_idx+1) << std::endl;
@@ -314,7 +314,7 @@ double ScaleEstimator::computeScaleTransform() {
 	//Need at least 3 Frames' Data
 	// Means 2 Motions' Data
 	if (ptrMotion[0] == NULL) return 0;
-	int pair2Cnt = ptrMotion[0]->mapPairPoints.size();
+	int pair2Cnt = ptrMotion[0]->getMapPairPointsRef().size();
 	if (pair2Cnt < 10) return 0;
 
 	//////////////////////////////////////////////////////////////////////////
@@ -333,11 +333,11 @@ double ScaleEstimator::computeScaleTransform() {
 	if (_isWriteInfomation) {
 
 		std::fstream fs;
-		int i0 = ptrMotion[0]->idxImg[0], i1 = ptrMotion[0]->idxImg[1];
+		int i0 = ptrMotion[0]->getIdxImg(0), i1 = ptrMotion[0]->getIdxImg(1);
 		fs.open(cv::format("./Velocity/m%06d_%06d.m", i0, i1), std::ios_base::out);
 
-		fs << cv::format("matR_%06d_%06d=", i0, i1) << ptrMotion[0]->matR << ";" << std::endl;
-		fs << cv::format("matT_%06d%_%06d=", i0, i1) << ptrMotion[0]->matT << ";" << std::endl;
+		fs << cv::format("matR_%06d_%06d=", i0, i1) << ptrMotion[0]->getMatRRef() << ";" << std::endl;
+		fs << cv::format("matT_%06d%_%06d=", i0, i1) << ptrMotion[0]->getMatTRef() << ";" << std::endl;
 
 		fs << cv::format("mInter_%06d%_%06d=", i0, i1) << matIntersection << ";" << std::endl;
 
@@ -371,7 +371,7 @@ cv::Mat ScaleEstimator::transformIn2Coord(int pntNum, int preIdx, int curIdx) {
 	cv::Mat matPosOrign[3];
 	for (auto& m : matPosOrign) m = cv::Mat(3, 1, CV_64FC1).clone();
 	matPosOrign[preIdx] = 0.0f;
-	matPosOrign[curIdx] = matPosOrign[preIdx] + ptrMotion[preIdx]->matT;
+	matPosOrign[curIdx] = matPosOrign[preIdx] + ptrMotion[preIdx]->getMatTRef();
 
 	/*
 	7.188560000000e+02 0.000000000000e+00 6.071928000000e+02
@@ -386,7 +386,7 @@ cv::Mat ScaleEstimator::transformIn2Coord(int pntNum, int preIdx, int curIdx) {
 	//0, 1 直线方向
 	//先摄像头转换, 再全部转换到0坐标系
 	matDirXYZ[preIdx] = matCameraInv*matPointUVW[preIdx];
-	matDirXYZ[curIdx] = ptrMotion[preIdx]->matR   *  matCameraInv * matPointUVW[curIdx];
+	matDirXYZ[curIdx] = ptrMotion[preIdx]->getMatRConst()   *  matCameraInv * matPointUVW[curIdx];
 
 	//计算 0,1 在0坐标系下的交点
 	matIntersection = cv::Mat(3, pntNum, CV_64FC1);
@@ -481,11 +481,10 @@ int ScaleEstimator::triangulate() {
 	bool _isWriteInfomation = false;
 
 	if (CFG_bIsLogGlobal)
-	printf("=========Scale Compute=========\n");
-	//Need at least 3 Frames' Data
-	// Means 2 Motions' Data
+	printf("=========Scale Triangulate=========\n");
+	//需要至少两帧吧
 	if (ptrMotion[0] == NULL) return 0;
-	int pair2Cnt = ptrMotion[0]->mapPairPoints.size();
+	int pair2Cnt = ptrMotion[0]->getMapPairPointsRef().size();
 	if (pair2Cnt < 10) return 0;
 
 	//////////////////////////////////////////////////////////////////////////
@@ -494,6 +493,7 @@ int ScaleEstimator::triangulate() {
 	transMask = transformIn2Coord(pair2Cnt, 0, 1);
 
 	int ret = 0;
+	//TODO: 这里应该分别判断两个摄像头是否都能看到,不能之判定一个
 	for (int i = 0; i < pair2Cnt; i++) {
 		ret += matIntersection.at<double>(2, i) > 0;
 	}

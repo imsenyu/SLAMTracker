@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "Constant.h"
 
-/** \var 用于运行时间统计(ms),不支持多线程 */
+/** \var 用于运行时间统计(ms),非线程安全 */
 extern std::map<std::string, double> mapTBegin; 
 
 /** \def 时间统计开始定义 */

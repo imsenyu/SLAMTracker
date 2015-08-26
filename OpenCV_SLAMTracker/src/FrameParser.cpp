@@ -4,92 +4,11 @@ FrameParser::~FrameParser() {
 	
 }
 
-//int FrameParser::detectExtractFeatures(int nFeatures, FeatureState& fState) {
-//	return FrameParser::detectExtractFeatures(nFeatures, fState.matImage, fState.vecKeyPoints, fState.vecFeaturePoints, fState.matDescriptor, fState.idxImg);
-//}
-//
-//int FrameParser::detectExtractFeatures(
-//	int nFeatures, cv::Mat& matImage,
-//	std::vector<cv::KeyPoint>& vecKeyPoints,
-//	std::vector<cv::Point2f>& vecFeaturePoints,
-//	cv::Mat & matDescriptor,
-//	int idxImg) {
-//
-//	bool _isTimeProfile = true;
-//	bool _isShowImage = false;
-//	bool _isLogData = true;
-//	bool _isUseLocalFeature = CFG_bIsUseCacheFeature;
-//	bool _isCacheCurrentFeature = CFG_bIsCacheCurrentFeature;
-//
-//	if (_isUseLocalFeature) {
-//		TIME_BEGIN("Feature Read");
-//		bool ret = loadFeature(idxImg,nFeatures,vecKeyPoints,vecFeaturePoints,matDescriptor);
-//		TIME_END("Feature Read");
-//		//读取不成功的话就自动计算
-//		if ( ret == true)
-//			return vecFeaturePoints.size();
-//	}
-//
-//	//////////////////////////////////////////////////////////////////////////
-//	//关键点生成
-//	cv::SiftFeatureDetector siftDetector(nFeatures);
-//	if (_isTimeProfile) TIME_BEGIN(cv::format("image-detect-%d", idxImg));
-//	siftDetector.detect(matImage, vecKeyPoints);
-//	if (_isTimeProfile) TIME_END(cv::format("image-detect-%d", idxImg));
-//
-//	vecFeaturePoints.clear();
-//
-//	//////////////////////////////////////////////////////////////////////////
-//	// KeyPoint 转换成 Point2
-//	for (auto& kpt : vecKeyPoints)
-//		vecFeaturePoints.push_back(kpt.pt);
-//
-//	if (_isLogData)
-//		printf("detect keypoint.size=%d\n", vecFeaturePoints.size());
-//
-//	//////////////////////////////////////////////////////////////////////////
-//	// 128维特征向量提取
-//	cv::SiftDescriptorExtractor siftExtractor(nFeatures);
-//	if (_isTimeProfile) TIME_BEGIN(cv::format("desc-compute-%d", idxImg));
-//	siftExtractor.compute(matImage, vecKeyPoints, matDescriptor);
-//	if (_isTimeProfile) TIME_END(cv::format("desc-compute-%d", idxImg));
-//
-//	if (_isCacheCurrentFeature) {
-//		TIME_BEGIN("Feature Write");
-//		writeFeature(idxImg, nFeatures, vecKeyPoints, vecFeaturePoints, matDescriptor);
-//		TIME_END("Feature Write");
-//	}
-//
-//	return vecFeaturePoints.size();
-//}
-
-//void FrameParser::DetectFeaturePoints(int nFeatures, int whichImage) {
-//
-//	//TODO：需要加入  写入特征数据和读取特征数据，跳过运算环节
-//	//TODO：先做，每次算下一张图，第一张图先算好直接获取，之后的不计算
-//	bool _isTimeProfile = true && isTimeProfile;
-//	bool _isShowImage = false && isShowImage;
-//	bool _isLogData = true && isLogData;
-//
-//	if (-1 == whichImage) {
-//		for (int idxImg = 0; idxImg < 2; idxImg++)
-//			FrameParser::DetectFeaturePoints(nFeatures, idxImg);
-//		return;
-//	}
-//
-//	DetectExtractFeatures(
-//		nFeatures, matOrignImage[whichImage],
-//		vecKeyPoints[whichImage],
-//		vecFeaturePoints[whichImage],
-//		matDescriptor[whichImage],
-//		whichImage == 0 ? preImgIdx : curImgIdx);
-//
-//}
 
 void FrameParser::match(double opThreshold) {
-	bool _isTimeProfile = true && isTimeProfile;
-	bool _isShowImage = true && isShowImage;
-	bool _isLogData = true && isLogData;
+	bool _isTimeProfile = true;
+	bool _isShowImage = true;
+	bool _isLogData = true;
 
 	cv::BruteForceMatcher<cv::L2<float>> BFMatcher;
 	std::vector<cv::DMatch> vecBFMatches;
@@ -124,7 +43,6 @@ void FrameParser::match(double opThreshold) {
 	vecFiltedMask.reserve(vecPairPoint[0].size());
 	vecFiltedMask.clear();
 
-//#pragma omp parallel for
 	//过滤掉太短的移动
 	for (int i = 0; i < vecPairPoint[0].size(); i++) {
 		double dist = cv::norm(vecPairPoint[0][i] - vecPairPoint[1][i]);
@@ -160,9 +78,9 @@ void FrameParser::match(double opThreshold) {
 }
 
 void FrameParser::validPointsByOpticalFlow(double threshold) {
-	bool _isTimeProfile = true && isTimeProfile;
-	bool _isShowImage = true && isShowImage;
-	bool _isLogData = true && isLogData;
+	bool _isTimeProfile = true;
+	bool _isShowImage = true;
+	bool _isLogData = true;
 
 	//////////////////////////////////////////////////////////////////////////
 	// 光流运算匹配
@@ -186,7 +104,6 @@ void FrameParser::validPointsByOpticalFlow(double threshold) {
 	// 筛选重复点
 	std::set< std::pair<int, int> > setPair;
 
-//#pragma omp parallel for
 	std::vector<double> vecDist;
 	for (int idxStatus = 0; idxStatus < vecOpticalStatus.size(); idxStatus++) {
 		if (true == vecOpticalStatus[idxStatus]) {
@@ -245,129 +162,18 @@ void FrameParser::validPointsByOpticalFlow(double threshold) {
 }
 
 
-////
-////int ValidCommonPerspective(std::vector<cv::Point2f> vecPairPoint[2],cv::Mat matFundStatus,cv::Mat matR, cv::Mat matT) {
-////	double arrCameraParam[] = { 718.856f, 0, 607.1928f, 0, 718.856f, 185.2157f, 0, 0, 1 };
-////	cv::Mat matCameraParam(3, 3, CV_64FC1, arrCameraParam);
-////
-////	printf("////////////////matR,matT//////\n");
-////	std::cout << matR << std::endl;
-////	std::cout << matT << std::endl;
-////	double Fu, Fv, Cu, Cv;
-////	Fu = matCameraParam.at<double>(0, 0);
-////	Fv = matCameraParam.at<double>(1, 1);
-////	Cu = matCameraParam.at<double>(0, 2);
-////	Cv = matCameraParam.at<double>(1, 2);
-////
-////	std::vector<cv::Mat> vecD3Point[2];
-////	for (int j = 0; j < 2; j++) {
-////		printf("/////////////////j=%d\n", j);
-////		for (int i = 0; i < vecPairPoint[0].size(); i++) {
-////			if (matFundStatus.at<uchar>(i, 0) == true) {
-////				cv::Mat tmp(3, 1, CV_64FC1);
-////				tmp.at<double>(0, 0) = (vecPairPoint[j][i].x - Cu) / Fu; //(u0-Cu)/Fu *** Z
-////				tmp.at<double>(1, 0) = (vecPairPoint[j][i].y - Cv) / Fv; //(v0-Cv) / Fv *** Z
-////				tmp.at<double>(2, 0) = 1.0f;
-////
-////				vecD3Point[j].push_back(tmp.clone());
-////				if ( j==1 && i<1 )
-////				std::cout << tmp << std::endl;
-////			}
-////		}
-////	}
-////
-////	printf("///////////////R*P+T\n");
-////	for (int i = 0; i < vecD3Point[1].size(); i++) {
-////		vecD3Point[1][i] = matR * vecD3Point[1][i] + matT;
-////		if (  i<1)
-////		std::cout << vecD3Point[1][i] << std::endl;
-////	}
-////
-////	//现在 存储的是 直线的方向向量
-////	//基本点是 (0,0,0) 和 (matT)
-////
-////	//开始计算 异面直线交点的位置
-////	printf("////////////////intersection\n");
-////	int ret = 0;
-////	for (int i = 0; i < vecD3Point[0].size(); i++) {
-////		cv::Mat inter = CalcLineIntersection(vecD3Point[0][i], vecD3Point[1][i], matT);
-////		ret += inter.at<double>(2, 0) > 0;
-////		if (i<1)
-////		std::cout << inter << std::endl;
-////	}
-////	return ret;
-////}
-
-//cv::Mat matCanvasFundaTest(400, 400, CV_8UC3);
-//
-//void draw3D(cv::Point2d base, cv::Mat matR, cv::Mat matT) {
-//	cv::Point2d oldBase = base;
-//	double arrBase[] = { 0, 0, 1 };
-//	cv::Mat baseMat(3, 1, CV_64FC1, arrBase);
-//
-//	cv::circle(matCanvasFundaTest, base, 2, cv::Scalar(0, 0, 0));
-//	cv::line(matCanvasFundaTest, base, base + 40.0f*cv::Point2d(baseMat.at<double>(0, 0), -baseMat.at<double>(2, 0)), cv::Scalar(0, 0, 255), 1.5);
-//
-//	base = base + 40.0f*cv::Point2d(matT.at<double>(0, 0), -matT.at<double>(2, 0));
-//	cv::line(matCanvasFundaTest, oldBase, base, cv::Scalar(255, 0, 255), 2);
-//	cv::circle(matCanvasFundaTest, base, 2, cv::Scalar(255, 0, 0));
-//	baseMat = matR * baseMat;
-//	cv::line(matCanvasFundaTest, base, base + 40.0f* cv::Point2d(baseMat.at<double>(0, 0), -baseMat.at<double>(2, 0)), cv::Scalar(0, 255, 0), 1.5);
-//
-//}
-//
-//void ShowFundamentDirection(cv::Mat matE) {
-//
-//	cv::SVD svd;
-//	cv::Mat matS, matU, matVT;
-//	svd.compute(matE, matS, matU, matVT, cv::SVD::FULL_UV);
-//	if (cv::determinant(matU) < 0)
-//		matU = -matU;
-//	if (cv::determinant(matVT) < 0)
-//		matVT = -matVT;
-//	printf("U,S,VT\n");
-//	std::cout << matU << std::endl;
-//	std::cout << matS << std::endl;
-//	std::cout << matVT << std::endl;
-//
-//	cv::Mat matR[4], matT[4];
-//	cv::Mat matW(3, 3, CV_64FC1);
-//	matW = 0.0f;
-//	matW.at<double>(0, 1) = -1.0f;
-//	matW.at<double>(1, 0) = 1.0f;
-//	matW.at<double>(2, 2) = 1.0f;
-//	for (int i = 0; i < 4; i++) {
-//		matR[i] = matU * (i % 2 ? matW.t() : matW) * matVT;
-//		matT[i] = (i / 2 ? 1.0f : -1.0f) * matU.col(2);
-//
-//		matT[i] = -matR[i].inv() * matT[i];
-//		matR[i] = matR[i].inv();
-//
-//		printf("i=%d\n R=\n", i);
-//		std::cout << matR[i] << std::endl;
-//		printf("T=\n");
-//		std::cout << matT[i] << std::endl;
-//	}
-//
-//	matCanvasFundaTest = cv::Scalar(255, 255, 255);
-//
-//
-//	cv::Point2d canvasBase(100, 100);
-//	for (int i = 0; i < 4; i++) {
-//		cv::Point2d offset((i % 2) * 100, (i / 2) * 100);
-//		draw3D(canvasBase + offset, matR[i], matT[i]);
-//	}
-//	//draw3D(canvasBase + cv::Point2d(200, 200), matRotationDef, matTransformDef);
-//	cv::imshow(cv::format("funda"), matCanvasFundaTest);
-//}
-//
 bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
-	bool _isTimeProfile = true && isTimeProfile;
-	bool _isShowImage = true && isShowImage;
-	bool _isLogData = true|| isLogData;
+	bool _isTimeProfile = true;
+	bool _isShowImage = true;
+	bool _isLogData = true;
+	//是否能够解基础矩阵(满足匹配点数大于minFundamentMatches)
 	bool _isUseFundamentalMatrix = vecPairPoint[0].size() >= minFundamentMatches;
 
+	motion.setIdxImg(0, preImgIdx);
+	motion.setIdxImg(1, curImgIdx);
+	motion.setMapPairPoints(mapPairPoints);
 
+	//默认返回值
 	bool retStatus = true;
 
 	cv::Mat matFundamental, matFundStatus;
@@ -376,6 +182,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 	if (_isLogData)
 		printf("Optical Pair[0].size=%d Pair[1].size=%d\n", vecPairPoint[0].size(), vecPairPoint[1].size());
 
+	//如果可以解基础矩阵 
 	if (_isUseFundamentalMatrix) {
 		if (_isTimeProfile) TIME_BEGIN("fundamental matrix");
 		//TODO: 加上，如果匹配不到点的话，就默认 正方向，不旋转 .
@@ -387,8 +194,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 		cv::Mat matE(3, 3, CV_64FC1);
 		matE = CFG_mCameraParameter.t() * matFundamental* CFG_mCameraParameter;
 
-		//Extra Show
-		//ShowFundamentDirection(matE.clone());
+
 		if (CFG_bIsLogGlobal)
 		if (_isLogData) {
 			printf("FundamentalMatrix=");
@@ -406,14 +212,14 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 		if (_isTimeProfile) TIME_END("SVD Decomp");
 
 		//如果基础矩阵解挂了，考虑默认直线
-		
 		if (cv::sum(matS)[0] < 1.0f) {
-			motion.matR = Const::mat33_111.clone();
-			motion.matT = Const::mat31_001.clone();
+			motion.setMatR(Const::mat33_111.clone());
+			motion.setMatT(Const::mat31_001.clone());
 			_isUseFundamentalMatrix = false;
 			retStatus = false;
 		}
 		else {
+			//如果 matU 或 matVT 的行列式小于0，反一下
 			if (cv::determinant(matU) < 0)
 				matU = -matU;
 			if (cv::determinant(matVT) < 0)
@@ -432,7 +238,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			matW.at<double>(1, 0) = 1.0f;
 			matW.at<double>(2, 2) = 1.0f;
 
-//#pragma omp parallel for
+			//matR 和 matT 有四种可能解
 			for (int i = 0; i < 4; i++) {
 				matR[i] = matU * (i % 2 ? matW.t() : matW) * matVT;
 				matT[i] = (i / 2 ? 1.0f : -1.0f) * matU.col(2);
@@ -440,6 +246,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 				matT[i] = -matR[i].inv() * matT[i];
 				matR[i] = matR[i].inv();
 
+				//Trick: 强制默认往前方向走, 如果遇到数据集往后的 再说.
 				if (matT[i].at<double>(2, 0) < 0.0f)  matT[i] = -matT[i];
 
 				if (CFG_bIsLogGlobal)
@@ -457,6 +264,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			double compSEL[4];
 		
 			for (int i = 0; i < 4; i++) {
+				//Trick: 选择在转弯上转的最小的那个
 				cv::Mat tmp = (matR[i] * Const::mat31_100);
 				compSEL[i] = tmp.at<double>(0, 0);
 				if (CFG_bIsLogGlobal)
@@ -471,6 +279,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 				}
 			}
 
+			//原则上来说应该使用三角测量来选择,但似乎效果并不好
 			//if (compSEL[0] > 0 && compSEL[1] > 0){
 			//	// 三角测量
 			//	ScaleEstimator sEstimator;
@@ -491,29 +300,24 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			//}
 			if (CFG_bIsLogGlobal)
 			printf("selectDirectionIdx=%d\n", selectDirectionIdx);
-			motion.matR = matR[selectDirectionIdx].clone();
-			motion.matT = matT[0].clone();
+			motion.setMatR(matR[selectDirectionIdx].clone());
+			motion.setMatT(matT[0].clone());
 
 		}
 		
 	}
 	else {
-		motion.matR = Const::mat33_111.clone();
-		motion.matT = Const::mat31_001.clone();
+		motion.setMatR(Const::mat33_111.clone());
+		motion.setMatT(Const::mat31_001.clone());
 		retStatus = false;
 		//TODO： 解挂了返回直线，点数不够返回 跳帧。
 	}
-
-	////判定一下 如果 matT的增量角度
-	//if(true){
-	//	motion.degreeT = Utils::getRodriguesRotation(motion.matT, cv::Mat());
-	//}
 
 	///输出图像的 角度
 	/*if (_isShowImage) {
 		DrawFeaturesFlow(matRotation, matTransform);
 		}*/
-	motion.inited = retStatus;
+	motion.setInited( retStatus );
 	return retStatus;
 }
 //
@@ -559,45 +363,20 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 //}
 //
 
-
-
-//void FrameParser::SetFeatureState(const FeatureState& fState, int idx) {
-//	//fState -> this
-//	fState.GetState(vecKeyPoints[idx], vecFeaturePoints[idx], matDescriptor[idx]);
-//	return;
-//}
-//
-//void FrameParser::GetFeatureState(FeatureState& fState, int idx) {
-//	//this -> fState
-//	fState.SetState(vecKeyPoints[idx], vecFeaturePoints[idx], matDescriptor[idx]);
-//	return;
-//}
-//
-//
-//void FrameParser::GetMotionState(MotionState& mState) {
-//	mState.idxImg[0] = preImgIdx;
-//	mState.idxImg[1] = curImgIdx;
-//	mState.mapPairPoints = mapPairPoints;
-//	return;
-//}
-
 FrameParser::FrameParser(FeatureState* prePtr, FeatureState* curPtr) {
-	isTimeProfile = true;
-	isShowImage = true;
-	isLogData = true;
 
-	preImgIdx = prePtr->idxImg;
-	curImgIdx = curPtr->idxImg;
+	preImgIdx = prePtr->getIdxImg();
+	curImgIdx = curPtr->getIdxImg();
 	
 	std::vector<FeatureState*> vecPtr(2);
 	vecPtr[0] = prePtr;
 	vecPtr[1] = curPtr;
 
 	for (int idx = 0; idx < 2; idx++) {
-		vecKeyPoints[idx] = vecPtr[idx]->vecKeyPoints;
-		vecFeaturePoints[idx] = vecPtr[idx]->vecFeaturePoints;
-		matDescriptor[idx] = vecPtr[idx]->matDescriptor;
-		matOrignImage[idx] = vecPtr[idx]->matImage;
+		vecKeyPoints[idx] = vecPtr[idx]->getVecKeyPointsConst();
+		vecFeaturePoints[idx] = vecPtr[idx]->getVecFeaturePointsConst();
+		matDescriptor[idx] = vecPtr[idx]->getMatDescriptorRef();
+		matOrignImage[idx] = vecPtr[idx]->getMatImageRef();
 	}
 
 	if (CFG_bIsLogGlobal) {

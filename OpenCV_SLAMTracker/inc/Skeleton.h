@@ -6,7 +6,7 @@
 #include "MotionState.h"
 /** 
  *	\class Skeleton
- *	\brief 骨架优化系统
+ *	\brief 骨架优化系统，目前已废弃
  */
 class Skeleton
 {

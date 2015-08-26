@@ -24,9 +24,9 @@ void Skeleton::initData(std::vector<PoseState>& vecPoses, std::vector< std::map<
 			curT.at<double>(3, 3) = 1.0f;
 			for (int i = 0; i < 3; i++) 
 			for (int j = 0; j < 3; j++)
-				curT.at<double>(i, j) = curMotion.matR.at<double>(i, j);
+				curT.at<double>(i, j) = curMotion.getMatRRef().at<double>(i, j);
 			for (int i = 0; i < 3; i++)
-				curT.at<double>(i, 3) = curMotion.matT.at<double>(i, 0);
+				curT.at<double>(i, 3) = curMotion.getMatTRef().at<double>(i, 0);
 
 			mapT.insert(std::make_pair(
 				std::pair<int, int>( idI,idJ ),
@@ -41,7 +41,7 @@ void Skeleton::initData(std::vector<PoseState>& vecPoses, std::vector< std::map<
 	vecE.resize(vecPoses.size());
 
 	for (int idx = 0; idx < vecPoses.size(); idx++) {
-		if (vecPoses[idx].inited == true) {
+		if (vecPoses[idx].getInited() == true) {
 			PoseState& curPose = vecPoses[idx];
 			cv::Mat curX(4, 4, CV_64FC1);
 			curX = 0.0f;
