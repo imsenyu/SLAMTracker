@@ -27,7 +27,7 @@ public:
 	 */
 	cv::Point2f gPointBase; 
 
-	std::string recordFilePath; /** \var 路径记录文件路径 */
+	std::string sPathRecordFile; /** \var 路径记录文件路径 */
 
 	/** \var 路径记录文件流对象
 	 *	按照pose要求的12个数据进行记录
@@ -60,6 +60,13 @@ private:
 	*	\param prePose,上一个姿态
 	*/
 	void logPose(PoseState& curPose, PoseState& prePose);
+	
+	/**
+	*	\fn 绘制当前
+	*	\param curPose,当前姿态
+	*	\param prePose,上一个姿态
+	*/
+	void drawScale(PoseState& curPose, PoseState& prePose);
 };
 
 #endif

@@ -13,7 +13,8 @@ public:
 	MotionState();
 	~MotionState();
 protected:
-	
+	Const::CErrType errType;
+
 	int idxImg[2]; /** \var 前后对比两张图片的编号 */
 	bool inited; /** \var 是否初始化 */
 	cv::Mat matR, matT; /** \var 旋转和位移矩阵 */
@@ -26,7 +27,19 @@ protected:
 	std::map<cv::Point2f, cv::Point2f, Utils::PointComp<float>> mapPairPoints;
 	
 public:
+	
+
 	/** Getter/Setter方法 */
+	int getErrType() const { return (int)errType;
+
+	}
+	void setErrType(int val) { errType = (Const::CErrType)(val == 0 ? 0 : (val | errType));
+	printf("///////////////////\n");
+	printf("setErrType= :%d\n",errType);
+	printf("///////////////////\n");
+	}
+	void setErrType(Const::CErrType val) { setErrType((int)val); }
+
 	int getIdxImg(int idx) const { return idxImg[idx]; }
 	int& setIdxImg(int idx, int val) { return idxImg[idx] = val; }
 
@@ -46,7 +59,7 @@ public:
 	void setMatT(cv::Mat& val) { matT = val; }
 
 	double getScale() const { return scale; }
-	void setScale(double val) { scale = val; }
+	void setScale(double val, bool isMulti = false) { scale = val; if (isMulti) scale = scale / (idxImg[1]-idxImg[0]); }
 
 	/**	\fn 获得degreeR和degreeT, 未运算(-100)则运算，否则直接返回
 	 *	\param 可选"R" 和 "T"

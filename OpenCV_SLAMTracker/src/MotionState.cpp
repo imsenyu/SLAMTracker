@@ -2,7 +2,8 @@
 
 
 MotionState::MotionState():
-inited(false)/*,
+inited(false),
+errType((Const::CErrType)0)/*,
 degreeR(-100),
 degreeT(-100)*/
 {
@@ -27,8 +28,8 @@ double MotionState::getDegree(const std::string& str) {
 	
 	switch (str[0]) {
 	case 'R':case 'r': {
-				 cv::Mat rotationDir = matR * Const::mat31_001;
-				 ret = Utils::getRodriguesRotation(rotationDir, cv::Mat());
+				 //计算 matRix吧[0,0,1]^T旋转了多少度
+				 ret = Utils::getRodriguesRotation(matR * Const::mat31_001, cv::Mat());
 	}	break;
 	case 'T':case 't': {
 				 ret = Utils::getRodriguesRotation(matT, cv::Mat());

@@ -7,16 +7,16 @@
 <bIsIgnoreDrawAxisY>1</bIsIgnoreDrawAxisY>
 <iImageBeginIdx>0</iImageBeginIdx>
 <iImageEndIdx>4540</iImageEndIdx>
-<bIsCacheFeature>1</bIsCacheFeature>
-<bIsUseCacheFeature>1</bIsUseCacheFeature>
+<bIsCacheFeature>0</bIsCacheFeature>
+<bIsUseCacheFeature>0</bIsUseCacheFeature>
 <iMaxFeatures>1500</iMaxFeatures>
 <dDrawFrameStep>1.</dDrawFrameStep>
 <dScaleRatioLimitBottom>1.2000000000000000e+000</dScaleRatioLimitBottom>
 <dScaleRatioLimitTop>50.</dScaleRatioLimitTop>
-<dScaleRatioErrorDefault>5.0000000000000000e-001</dScaleRatioErrorDefault>
+<dScaleRatioErrorDefault>5.0000000000000003e-002</dScaleRatioErrorDefault>
 <dRotationDiffLimit>7.</dRotationDiffLimit>
 <bIsLimitRotationDiff>1</bIsLimitRotationDiff>
-<bIsUseGroundTruthDistance>1</bIsUseGroundTruthDistance>
+<bIsUseGroundTruthDistance>0</bIsUseGroundTruthDistance>
 <dScaleInvIncreaseDiffLimit>1.0000000000000002e-001</dScaleInvIncreaseDiffLimit>
 <mCameraParameter type_id="opencv-matrix">
   <rows>3</rows>

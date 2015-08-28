@@ -7,6 +7,14 @@
  *	\brief 常用矩阵单位常量定义
  */
 namespace Const{
+	/** \enum 运动估算错误类型 */
+	enum CErrType { 
+		OK = 0, 
+		LimitPOINT = 0x1, 
+		DefaultSCALE = 0x10, 
+		LimitROT = 0x100, 
+		LimitSCALEDIFF = 0x1000, 
+		LimitSCALEPEAK = 0x10000 };
 
 	/** \var 3,1矩阵初始化数组 */
 	extern double arr31_001000[];

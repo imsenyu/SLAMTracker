@@ -3,7 +3,8 @@
 
 PoseState::PoseState(int _ImgIdx) :
 inited(false),
-idxImg(_ImgIdx)
+idxImg(_ImgIdx),
+errType((Const::CErrType)0)
 {
 }
 
@@ -35,8 +36,8 @@ PoseState PoseState::move(const MotionState& motion) {
 	cv::Mat matTmpRotate;
 	Utils::getRodriguesRotation(matLocalDir, matTmpRotate);
 
-	//matLocalPos = matLocalPos + matTmpRotate * motion.matT * 1.65 / motion.scale;
 
+	//如果不考虑y轴影响,则要重新把 模长置为1
 	if (CFG_bIsNotConsiderAxisY) {
 		cv::Mat tT = motion.getMatTConst().clone();
 		tT.at<double>(1, 0) = 0.0f;
@@ -49,7 +50,7 @@ PoseState PoseState::move(const MotionState& motion) {
 	
 
 
-	//不考虑Y轴
+	//如果不考虑y轴影响,则要重新把 模长置为1
 	if (CFG_bIsNotConsiderAxisY) {
 		cv::Mat matRC = motion.getMatRConst() * Const::mat31_001;
 
@@ -82,11 +83,16 @@ PoseState PoseState::move(const MotionState& motion) {
 	retPose.idxImg = motion.getIdxImg(1);
 	retPose.dir = cv::Point3d((cv::Vec<double, 3>)matLocalDir);
 	retPose.pos = cv::Point3d((cv::Vec<double, 3>)matLocalPos);
-	//retPose.dir3 = motion.matR * matTmpRotate;
+
 	retPose.dir3 = dir3.clone();
 
 	retPose.inited = inited;
-
+	if (motion.getErrType() != 0) {
+		printf("///////////////////\n");
+		printf("move getErrType= :%d\n", motion.getErrType());
+		printf("///////////////////\n");
+	}
+	retPose.setErrType(motion.getErrType());
 	return retPose;
 }
 
@@ -114,6 +120,7 @@ PoseState PoseState::calcAverage(std::vector<PoseState>& vecPS) {
 	for (int idx = 0; idx < vecEstLen; idx++) {
 		retPose.pos += vecPS[idx].pos;// *pow[idx];
 		retPose.dir += vecPS[idx].dir;// *pow[idx];
+		retPose.setErrType(vecPS[ idx].getErrType());
 	}
 
 	//取平均
@@ -129,4 +136,8 @@ PoseState PoseState::calcAverage(std::vector<PoseState>& vecPS) {
 	Utils::getRodriguesRotation(_rtDir, retPose.dir3);
 
 	return retPose;
+}
+
+void PoseState::setErrType(int val) {
+	errType = (Const::CErrType)(val == 0 ? 0 : (val | errType));
 }

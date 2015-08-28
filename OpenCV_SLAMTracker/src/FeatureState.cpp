@@ -30,7 +30,11 @@ int FeatureState::detectExtractFeatures(
 	bool _isUseCacheFeature = CFG_bIsUseCacheFeature;
 	bool _isCacheCurrentFeature = CFG_bIsCacheCurrentFeature;
 
-	//若使用本地缓存
+	/**
+	 *	如果开启 CFG_bIsUseCacheFeature ,就尝试调用loadFeature读取缓存
+	 *	如果读取成功 return, 
+	 *	读取失败 标记未读取缓存,继续计算
+	 */
 	if (_isUseCacheFeature) {
 		TIME_BEGIN("Feature Read");
 		bool ret = loadFeature(idxImg, nFeatures, vecKeyPoints, vecFeaturePoints, matDescriptor);
@@ -48,8 +52,16 @@ int FeatureState::detectExtractFeatures(
 	siftDetector.detect(matImage, vecKeyPoints);
 	if (_isTimeProfile) TIME_END(cv::format("image-detect-%d", idxImg));
 
+	
 	//KeyPoint转换成Point2f
 	vecFeaturePoints.clear();
+
+	//来试试 Harris角点
+	//cv::Mat matGray;
+	//cv::cvtColor(matImage, matGray, CV_BGR2GRAY);
+	//cv::goodFeaturesToTrack(matGray, vecFeaturePoints, 3000, 0.01, 10);
+	//vecFeaturePoints.clear();
+
 	for (auto& kpt : vecKeyPoints)
 		vecFeaturePoints.push_back(kpt.pt);
 	if (CFG_bIsLogGlobal)
@@ -62,7 +74,9 @@ int FeatureState::detectExtractFeatures(
 	siftExtractor.compute(matImage, vecKeyPoints, matDescriptor);
 	if (_isTimeProfile) TIME_END(cv::format("desc-compute-%d", idxImg));
 
-	// 缓存当前计算数据点(如果是读取的本地就不再写入了)
+	/**
+	 *	如果配置中要求缓存已计算数据, 并且 当前的数据并不是读取自缓存,则尝试写入
+	 */
 	if (_isCacheCurrentFeature && _isUseCacheFeature == false) {
 		TIME_BEGIN("Feature Write");
 		writeFeature(idxImg, nFeatures, vecKeyPoints, vecFeaturePoints, matDescriptor);
@@ -80,7 +94,7 @@ bool FeatureState::loadImage(int _ImgIdx) {
 
 	// 如果读取图像失败
 	if (matImage.rows == 0 || matImage.cols == 0) {
-		std::string error = "Image Load Error";
+		std::string error = "Image Load Error: ";
 		throw std::exception( (error + imgPath).c_str() );
 	}
 

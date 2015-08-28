@@ -76,6 +76,8 @@ public:
 
 	bool hasNext() { return idxImgCur <= idxImgEnd; }
 
+	//void showImage(FeatureState* ptrFS);
+
 	void lm();
 };
 

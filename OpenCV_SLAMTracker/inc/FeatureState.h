@@ -20,6 +20,7 @@ protected:
 	int idxImg; /** \var 特征对象对应的图像编号 */
 
 	std::vector<cv::KeyPoint> vecKeyPoints; /** \var KeyPoint关键点集合 */
+
 	/** \var KeyPoint中提取出来的特征点集合
 	 *	KeyPoint到Point2f的转换 
 	 */
@@ -69,7 +70,14 @@ public:
 protected:
 	/** \brief virtual供派生来重写 */
 
-	/** \fn 对FeatureState内部数据的展开形式 */
+	/** \fn 对FeatureState内部数据的展开形式 
+	 *	\param nFeatures	SIFT特征点数上限
+	 *	\param matImage		图像矩阵
+	 *	\param vecKeyPoints	关键点数组
+	 *	\param vecFeaturePoints	特征点数组
+	 *	\param matDescriptor	128维描述子
+	 *	\return	返回特征点数
+	 */
 	virtual int detectExtractFeatures(int nFeatures, cv::Mat& matImage, std::vector<cv::KeyPoint>& vecKeyPoints, std::vector<cv::Point2f>& vecFeaturePoints, cv::Mat & matDescriptor, int idxImg);
 
 	/** \fn 往缓存写入特征数据

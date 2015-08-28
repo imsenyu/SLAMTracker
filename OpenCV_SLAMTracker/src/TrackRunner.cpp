@@ -83,6 +83,8 @@ int TrackRunner::runKeyStep() {
 		FeatureState* ptrCurFeature = new FeatureState(idxImgCur);
 		ptrCurFeature->detect(CFG_iMaxFeatures);
 		TIME_END("FeatureDetect");
+		
+		//showImage(ptrCurFeature);
 
 		// 确定当前帧需要比较的 历史帧集合
 		std::vector<FeatureState*> vecKeyList;
@@ -111,13 +113,21 @@ int TrackRunner::runKeyStep() {
 			if (motionStatus == false) {
 				printf("运动参数计算失败\n");
 				//TODO: 解不出来默认 运动,然后 强制一个默认尺度
+				if (idxImgCur > 500 && idxImgCur < 600) {
+					vecCurMotions[idx].setInited(true);
+					//按照CFG设置
+					vecCurMotions[idx].setScale(1.65f / CFG_dScaleRatioErrorDefault, true);
+					vecCurMotions[idx].setErrType(0);
+				}
 				continue;
 			}
 
 			// 位移旋转限值
 			if (CFG_bIsLimitRotationDiff && limitRotationDiff(vecCurMotions[idx],CFG_dRotationDiffLimit) == false) {
 				printf("旋转跳\n");
-				vecCurMotions[idx].setInited( false );
+				vecCurMotions[idx].setInited(false);
+				
+
 				continue;
 			}
 
@@ -135,6 +145,7 @@ int TrackRunner::runKeyStep() {
 			// 如果连跳多帧，那
 			if (limitScaleDiff(vecCurMotions[idx], curScale, CFG_dScaleInvIncreaseDiffLimit) == false) {
 				vecCurMotions[idx].setInited( false );
+				
 				continue;
 			}
 			int idxDelta = vecCurMotions[idx].getIdxImg(1) - vecCurMotions[idx].getIdxImg(0);
@@ -161,9 +172,13 @@ int TrackRunner::runKeyStep() {
 				printf("Scale LIMIT %d-%d:%f %f\n", vecCurMotions[idx].getIdxImg(0), vecCurMotions[idx].getIdxImg(1), curScale, 1.65f / curScale);
 				if (curScale*idxDelta < CFG_dScaleRatioLimitBottom) {
 					curScale = CFG_dScaleRatioLimitBottom / idxDelta;
+					vecCurMotions[idx].setErrType(Const::CErrType::LimitSCALEPEAK);
 				}
-				else
+				else {
 					curScale = CFG_dScaleRatioLimitTop / idxDelta;
+					vecCurMotions[idx].setErrType(Const::CErrType::LimitSCALEPEAK);
+				}
+
 				
 			}
 
@@ -417,6 +432,7 @@ bool TrackRunner::limitRotationDiff(MotionState& curMotion, double limit) {
 
 	if (std::abs(curDelta - preDelta) > limit) {
 		printf("Rotation Error %d:%f %d:%f \n", idxPre1, preDelta, idxCur, curDelta);
+		curMotion.setErrType(Const::CErrType::LimitROT);
 		return false;
 	}
 
@@ -470,6 +486,7 @@ bool TrackRunner::limitScaleDiff(MotionState& curMotion, double& curScale, doubl
 
 	//if (std::abs(curDelta - 1.0f) > limit) {
 	if (std::abs(curDelta ) > 1.2f* limit) {
+		curMotion.setErrType(Const::CErrType::LimitSCALEDIFF);
 		if (std::abs(curDelta) > limit)
 		printf("Scale Error %d-%d:%f %f    %d-%d:%f %f\n", 
 			idxPre2, idxPre1, preMotion1.getScale()*(idxPre1 - idxPre2), 1.65f / preMotion1.getScale() / (idxPre1 - idxPre2), 
@@ -488,3 +505,54 @@ bool TrackRunner::limitScaleDiff(MotionState& curMotion, double& curScale, doubl
 
 	return true;
 }
+
+//void TrackRunner::showImage(FeatureState* ptrFS)
+//{
+//	//尝试边缘检测后Hough直线检测
+//
+//	return;
+//	cv::Mat matEdge;
+//	cv::Mat matInput = ptrFS->getMatImageConst();
+//	cv::cvtColor(matInput, matEdge,CV_BGR2GRAY);
+//	cv::Mat matRes;
+//
+//	{/// Generate grad_x and grad_y
+//		cv::Mat grad_x, grad_y;
+//		cv::Mat abs_grad_x, abs_grad_y;
+//
+//		int ddepth = matEdge.depth();
+//		int delta = 0;
+//		int scale = 1;
+//		/// Gradient X
+//		//Scharr( src_gray, grad_x, ddepth, 1, 0, scale, delta, BORDER_DEFAULT );
+//
+//		cv::Sobel(matEdge, grad_x, ddepth, 1, 0, 3, scale, delta, cv::BORDER_DEFAULT);
+//		cv::convertScaleAbs(grad_x, abs_grad_x);
+//
+//		/// Gradient Y
+//		//Scharr( src_gray, grad_y, ddepth, 0, 1, scale, delta, BORDER_DEFAULT );
+//		cv::Sobel(matEdge, grad_y, ddepth, 0, 1, 3, scale, delta, cv::BORDER_DEFAULT);
+//		cv::convertScaleAbs(grad_y, abs_grad_y);
+//
+//		/// Total Gradient (approximate)
+//		cv::addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, matEdge);
+//
+//	}
+//
+//	//cv::cvtColor(matEdge, matEdge, CV_BGR2GRAY);
+//	cv::Canny(matInput, matEdge, 60, 100);
+//	matRes = matEdge.clone();
+//	std::vector<cv::Vec4i> lines;
+//
+//	//cv::HoughLines(matEdge, lines, 1, CV_PI / 180, 80);
+//	cv::HoughLinesP(matEdge, lines, 1, CV_PI / 180, 80, 50, 10);
+//	lines.resize(20);
+//	for (auto & line : lines) {
+//		cv::Point pt1(line[0], line[1]);
+//		cv::Point pt2(line[2], line[3]);
+//		cv::line(matRes, pt1, pt2, cv::Scalar(255,0,0));
+//	}
+//
+//	cv::imshow("Hough", matRes);
+//	cv::waitKey(1);
+//}

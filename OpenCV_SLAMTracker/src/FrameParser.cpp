@@ -82,7 +82,6 @@ void FrameParser::validPointsByOpticalFlow(double threshold) {
 	bool _isShowImage = true;
 	bool _isLogData = true;
 
-	//////////////////////////////////////////////////////////////////////////
 	// 光流运算匹配
 	std::vector<cv::Point2f> vecOpticalFound;
 	std::vector<uchar>  vecOpticalStatus;
@@ -124,7 +123,7 @@ void FrameParser::validPointsByOpticalFlow(double threshold) {
 		threshold = std::min(threshold, vecDist[300 - 1]);
 	}*/
 
-	//根据移动阈值筛点
+	//根据阈值筛点
 	for (int idxStatus = 0; idxStatus < vecOpticalStatus.size(); idxStatus++) {
 		if (true == vecOpticalStatus[idxStatus]) {
 			cv::Point2f
@@ -186,11 +185,11 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 	if (_isUseFundamentalMatrix) {
 		if (_isTimeProfile) TIME_BEGIN("fundamental matrix");
 		//TODO: 加上，如果匹配不到点的话，就默认 正方向，不旋转 .
-		//TODO：加上，如果匹配不到点，返回错误，跳过该帧识别，直接用前一帧和后一帧进行检测。
-		//TODO：如果匹配点小于 15 则使用 8POINT，否则 LMEDS随机
+		//TODO：加上，如果匹配点小于 15，返回错误，跳过该帧识别，直接用前一帧和后一帧进行检测。
 		matFundamental = cv::findFundamentalMat(vecPairPoint[0], vecPairPoint[1], matFundStatus, CV_FM_LMEDS);
 		if (_isTimeProfile) TIME_END("fundamental matrix");
 
+		//本质矩阵计算
 		cv::Mat matE(3, 3, CV_64FC1);
 		matE = CFG_mCameraParameter.t() * matFundamental* CFG_mCameraParameter;
 
@@ -203,7 +202,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			std::cout << matE << std::endl;
 		}
 
-		//Compute SVD singular vector decomp
+		//SVD分解
 		cv::SVD svdComputer;
 		cv::Mat matU(3, 3, CV_64FC1), matS(3, 3, CV_64FC1), matVT(3, 3, CV_64FC1);
 
@@ -217,6 +216,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			motion.setMatT(Const::mat31_001.clone());
 			_isUseFundamentalMatrix = false;
 			retStatus = false;
+			motion.setErrType(Const::CErrType::LimitPOINT);
 		}
 		else {
 			//如果 matU 或 matVT 的行列式小于0，反一下
@@ -302,7 +302,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			printf("selectDirectionIdx=%d\n", selectDirectionIdx);
 			motion.setMatR(matR[selectDirectionIdx].clone());
 			motion.setMatT(matT[0].clone());
-
+			
 		}
 		
 	}
@@ -310,6 +310,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 		motion.setMatR(Const::mat33_111.clone());
 		motion.setMatT(Const::mat31_001.clone());
 		retStatus = false;
+		motion.setErrType(Const::CErrType::LimitPOINT);
 		//TODO： 解挂了返回直线，点数不够返回 跳帧。
 	}
 
