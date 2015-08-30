@@ -7,8 +7,8 @@
 <bIsIgnoreDrawAxisY>1</bIsIgnoreDrawAxisY>
 <iImageBeginIdx>0</iImageBeginIdx>
 <iImageEndIdx>4540</iImageEndIdx>
-<bIsCacheFeature>0</bIsCacheFeature>
-<bIsUseCacheFeature>0</bIsUseCacheFeature>
+<bIsCacheFeature>1</bIsCacheFeature>
+<bIsUseCacheFeature>1</bIsUseCacheFeature>
 <iMaxFeatures>1500</iMaxFeatures>
 <dDrawFrameStep>1.</dDrawFrameStep>
 <dScaleRatioLimitBottom>1.2000000000000000e+000</dScaleRatioLimitBottom>

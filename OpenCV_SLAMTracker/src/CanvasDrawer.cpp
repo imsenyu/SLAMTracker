@@ -159,6 +159,6 @@ void CanvasDrawer::drawScale(PoseState& curPose, PoseState& prePose) {
 
 	cv::imshow(cv::format("%s-%s", "Scale", CFG_sDataName.c_str()), tmpScale);
 	if (curPose.idxImg / 100 != prePose.idxImg / 100) {
-		cv::imwrite(sPathRecordFile + ".png", tmpScale);
+		cv::imwrite(sPathRecordFile + "_scale.png", tmpScale);
 	}
 }
