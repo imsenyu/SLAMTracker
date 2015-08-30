@@ -494,8 +494,20 @@ int ScaleEstimator::triangulate() {
 
 	int ret = 0;
 	//TODO: 这里应该分别判断两个摄像头是否都能看到,不能之判定一个
-	for (int i = 0; i < pair2Cnt; i++) {
-		ret += matIntersection.at<double>(2, i) > 0;
+	//for (int i = 0; i < pair2Cnt; i++) {
+	//	ret += matIntersection.at<double>(2, i) > 0;
+	//}
+	cv::Mat matDir2 = ptrMotion[0]->getMatRConst()* Const::mat31_001;
+	cv::Point3d pT = (cv::Vec<double, 3>)(ptrMotion[0]->getMatTConst());
+	cv::Point3d pDir2 = (cv::Vec<double, 3>)matDir2;
+	cv::Point3d pDir1 = Const::pnt3d_001;
+	for (int idx = 0; idx < pair2Cnt; idx++) {
+		cv::Point3d p1 = (cv::Vec<double, 3>)(matIntersection.col(idx));
+		cv::Point3d p2 = p1 - pT;
+
+		if (p1.dot(pDir1) > 0 && p2.dot(pDir2) > 0) {
+			ret++;
+		}
 	}
 	return ret;
 }

@@ -30,6 +30,7 @@ protected:
 	/** \var 用于特别指定读取scale，需要做其他修改 */
 	PoseHelper pVisio;
 	bool bIsInRotate;
+	Const::Error curError;
 
 	// 数据历史记录
 	std::vector<PoseState> vecPoses; /** \var 记录从开始到现在的所有坐标姿态(位置,方向) */

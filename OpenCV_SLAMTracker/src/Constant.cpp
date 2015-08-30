@@ -22,3 +22,19 @@ const cv::Point3d Const::pnt3d_001(0, 0, 1);
 const cv::Point3d Const::pnt3d_010(0, 1, 0);
 const cv::Point3d Const::pnt3d_100(1, 0, 0);
 const cv::Point3d Const::pnt3d_111(1, 1, 1);
+
+void Const::Error::set(int val, bool flag)
+{
+	if (flag == true) {
+		type = (Const::Error::Type)(val == 0 ? 0 : (val | type));
+	}
+		
+	else {
+		if (val != 0) {
+			printf("Merge %d -> %d\n", type, val | type);
+		}
+		type = (Const::Error::Type)(val | type);
+		
+	}
+		
+}

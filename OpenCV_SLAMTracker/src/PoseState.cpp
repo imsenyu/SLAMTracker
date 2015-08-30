@@ -4,7 +4,7 @@
 PoseState::PoseState(int _ImgIdx) :
 inited(false),
 idxImg(_ImgIdx),
-errType((Const::CErrType)0)
+errType((Const::Error)0)
 {
 }
 
@@ -87,12 +87,12 @@ PoseState PoseState::move(const MotionState& motion) {
 	retPose.dir3 = dir3.clone();
 
 	retPose.inited = inited;
-	if (motion.getErrType() != 0) {
+	if (motion.errType.get() != 0) {
 		printf("///////////////////\n");
-		printf("move getErrType= :%d\n", motion.getErrType());
+		printf("move getErrType= :%d\n", motion.errType.get());
 		printf("///////////////////\n");
 	}
-	retPose.setErrType(motion.getErrType());
+	retPose.errType.set(motion.errType.get());
 	return retPose;
 }
 
@@ -120,7 +120,7 @@ PoseState PoseState::calcAverage(std::vector<PoseState>& vecPS) {
 	for (int idx = 0; idx < vecEstLen; idx++) {
 		retPose.pos += vecPS[idx].pos;// *pow[idx];
 		retPose.dir += vecPS[idx].dir;// *pow[idx];
-		retPose.setErrType(vecPS[ idx].getErrType());
+		retPose.errType.set(vecPS[idx].errType.get());
 	}
 
 	//È¡Æ½¾ù
@@ -138,6 +138,4 @@ PoseState PoseState::calcAverage(std::vector<PoseState>& vecPS) {
 	return retPose;
 }
 
-void PoseState::setErrType(int val) {
-	errType = (Const::CErrType)(val == 0 ? 0 : (val | errType));
-}
+

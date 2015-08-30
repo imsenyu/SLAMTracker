@@ -216,7 +216,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			motion.setMatT(Const::mat31_001.clone());
 			_isUseFundamentalMatrix = false;
 			retStatus = false;
-			motion.setErrType(Const::CErrType::LimitPOINT);
+			motion.errType.set(Const::Error::LimitPOINT);
 		}
 		else {
 			//如果 matU 或 matVT 的行列式小于0，反一下
@@ -267,8 +267,8 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 				//Trick: 选择在转弯上转的最小的那个
 				cv::Mat tmp = (matR[i] * Const::mat31_100);
 				compSEL[i] = tmp.at<double>(0, 0);
-				if (CFG_bIsLogGlobal)
-				if ( _isLogData )
+				//if (CFG_bIsLogGlobal)
+				//if ( _isLogData )
 					printf("valid[%d] = %f\n", i, compSEL[i]);
 			}
 			double maxValidation = -100.0f; int selectDirectionIdx = 0;
@@ -280,24 +280,30 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			}
 
 			//原则上来说应该使用三角测量来选择,但似乎效果并不好
-			//if (compSEL[0] > 0 && compSEL[1] > 0){
-			//	// 三角测量
-			//	ScaleEstimator sEstimator;
-			//	motion.matT = matT[0].clone();
-			//	int num_inlier = 0;
-			//	
-			//	for (int i = 0; i < 2; i++) {
-			//		motion.matR =  matR[i].clone();
-			//		sEstimator.updateMotion(&motion);
-			//		int num = sEstimator.triangulate();
-			//		if (num > num_inlier) {
-			//			selectDirectionIdx = i;
-			//			num_inlier = num;
-			//		}
-			//		if (CFG_bIsLogGlobal)
-			//		printf("[%d]=%d\n", i, num);
-			//	}		
-			//}
+			int preSelect = selectDirectionIdx;
+			if (true){
+				// 三角测量
+				ScaleEstimator sEstimator;
+				motion.setMatT(matT[0].clone());
+				int num_inlier = 0;
+				
+				for (int i = 0; i < 2; i++) {
+					motion.setMatR(matR[i].clone());
+					sEstimator.updateMotion(&motion);
+					int num = sEstimator.triangulate();
+					if (num > num_inlier) {
+						selectDirectionIdx = i;
+						num_inlier = num;
+					}
+					//if (CFG_bIsLogGlobal)
+					printf("[%d]=%d\n", i, num);
+				}		
+			}
+			if (preSelect != selectDirectionIdx) {
+
+				printf("preSel=%d sel=%d\n", preSelect, selectDirectionIdx);
+				//printf("%f %f\n%d %d\n",)
+			}
 			if (CFG_bIsLogGlobal)
 			printf("selectDirectionIdx=%d\n", selectDirectionIdx);
 			motion.setMatR(matR[selectDirectionIdx].clone());
@@ -310,7 +316,7 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 		motion.setMatR(Const::mat33_111.clone());
 		motion.setMatT(Const::mat31_001.clone());
 		retStatus = false;
-		motion.setErrType(Const::CErrType::LimitPOINT);
+		motion.errType.set(Const::Error::LimitPOINT);
 		//TODO： 解挂了返回直线，点数不够返回 跳帧。
 	}
 

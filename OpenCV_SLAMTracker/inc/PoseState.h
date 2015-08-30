@@ -14,7 +14,7 @@ public:
 	~PoseState();
 protected:
 	bool inited;
-	Const::CErrType errType;
+	
 public:
 	/** \fn 对于给定的一个运动,返回新的坐标位置 */
 	PoseState move(const MotionState& motion);
@@ -25,9 +25,7 @@ public:
 	cv::Point3d dir;/** \var 记录当时镜头方向 */
 	cv::Mat dir3; /** 从eye(3,3)旋转到现在的镜头方向 */
 
-	int getErrType() const { return (int)errType; }
-	void setErrType(int val);
-	void setErrType(Const::CErrType val) { setErrType((int)val); }
+	Const::Error errType;
 
 	bool getInited() const { return inited; }
 	void setInited(bool val) { inited = val; }

@@ -3,7 +3,7 @@
 
 MotionState::MotionState():
 inited(false),
-errType((Const::CErrType)0)/*,
+errType(0)/*,
 degreeR(-100),
 degreeT(-100)*/
 {

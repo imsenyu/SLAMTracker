@@ -8,13 +8,24 @@
  */
 namespace Const{
 	/** \enum 运动估算错误类型 */
-	enum CErrType { 
-		OK = 0, 
-		LimitPOINT = 0x1, 
-		DefaultSCALE = 0x10, 
-		LimitROT = 0x100, 
-		LimitSCALEDIFF = 0x1000, 
-		LimitSCALEPEAK = 0x10000 };
+	class Error {
+	public:
+		typedef enum {
+			OK = 0,
+			LimitPOINT = 0x1,
+			DefaultSCALE = 0x2,
+			LimitROT = 0x4,
+			LimitSCALEDIFF = 0x8,
+			LimitSCALEPEAK = 0x10
+		} Type;
+	protected:
+		Type type;
+	public:
+		Error(int t = 0) : type((Type)t) {}
+		int get() const { return (int)type; }
+		void set(int val, bool flag = true);
+		void set(Const::Error val, bool flag = true) { set((int)val.type, flag); }
+	};
 
 	/** \var 3,1矩阵初始化数组 */
 	extern double arr31_001000[];

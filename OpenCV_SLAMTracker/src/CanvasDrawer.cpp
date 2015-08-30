@@ -147,15 +147,18 @@ void CanvasDrawer::drawScale(PoseState& curPose, PoseState& prePose) {
 	//画布翻转
 	cv::flip(matScaleCanvas, tmpScale, 0);
 
-	if (true) {
+	if (curPose.errType.get() > 0) {
 		//画出该curPose的 err
 		for (int i = 0; i < 5; i++) {
-			if ((1 << i) & curPose.getErrType()) {
-				cv::line(tmpScale, cv::Point2f(curPose.idxImg, i * 10), cv::Point2f(curPose.idxImg, (i+1) * 10), cv::Scalar::all(-1));
+			if ((1 << i) & curPose.errType.get()) {
+				cv::line(tmpScale, cv::Point2i(curPose.idxImg, i * 10), cv::Point2i(curPose.idxImg, (i+1) * 10), cv::Scalar(255,0,0));
 			}
 		}
 	}
+	cv::flip(tmpScale, matScaleCanvas, 0);
 
 	cv::imshow(cv::format("%s-%s", "Scale", CFG_sDataName.c_str()), tmpScale);
-
+	if (curPose.idxImg / 100 != prePose.idxImg / 100) {
+		cv::imwrite(sPathRecordFile + ".png", tmpScale);
+	}
 }

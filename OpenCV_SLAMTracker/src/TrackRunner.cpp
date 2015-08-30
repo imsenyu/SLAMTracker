@@ -117,7 +117,7 @@ int TrackRunner::runKeyStep() {
 					vecCurMotions[idx].setInited(true);
 					//按照CFG设置
 					vecCurMotions[idx].setScale(1.65f / CFG_dScaleRatioErrorDefault, true);
-					vecCurMotions[idx].setErrType(0);
+					vecCurMotions[idx].errType.set(0);
 				}
 				continue;
 			}
@@ -172,11 +172,11 @@ int TrackRunner::runKeyStep() {
 				printf("Scale LIMIT %d-%d:%f %f\n", vecCurMotions[idx].getIdxImg(0), vecCurMotions[idx].getIdxImg(1), curScale, 1.65f / curScale);
 				if (curScale*idxDelta < CFG_dScaleRatioLimitBottom) {
 					curScale = CFG_dScaleRatioLimitBottom / idxDelta;
-					vecCurMotions[idx].setErrType(Const::CErrType::LimitSCALEPEAK);
+					vecCurMotions[idx].errType.set(Const::Error::LimitSCALEPEAK);
 				}
 				else {
 					curScale = CFG_dScaleRatioLimitTop / idxDelta;
-					vecCurMotions[idx].setErrType(Const::CErrType::LimitSCALEPEAK);
+					vecCurMotions[idx].errType.set(Const::Error::LimitSCALEPEAK);
 				}
 
 				
@@ -195,6 +195,17 @@ int TrackRunner::runKeyStep() {
 
 		}
 		TIME_END(cv::format("Match&Motion[%d]", vecKeyList.size()));
+
+		if ( idxImgCur <= 2 || vecEnableIdxs[idxImgCur-1] > 0) {
+			curError.set(0);
+		}
+		else {
+			printf("Pre Error: %d\n", curError.get());
+		}
+			
+		for (auto& motion : vecCurMotions) {
+			curError.set(motion.errType, false);
+		}
 
 		//按照一定规则过滤 vecCurMotions,目前先过滤掉 inited为false的
 		int cntValid = filterMotions(vecCurMotions,0);
@@ -221,19 +232,11 @@ int TrackRunner::runKeyStep() {
 				}
 			}
 			
-			/** TODO: 需要有个方法判定当前是否在转弯. */
-			if (std::abs(vecCurMotions[0].getDegree("T")) > 7.0f) {
-				if (CFG_bIsLogGlobal)
-				printf("...\n");
-				bIsInRotate = true;
-			}
-			else {
-				bIsInRotate = false;
-			}
 
 			/** TODO: 新的多位姿选择方法 */
 			PoseState curPoseState = PoseState::calcAverage(vecEstiPoses);
-			
+			curPoseState.errType.set(curError);
+
 			// 更新队列和关键帧
 			updateKeyList(ptrCurFeature);
 			cntRunOk++;
@@ -432,7 +435,7 @@ bool TrackRunner::limitRotationDiff(MotionState& curMotion, double limit) {
 
 	if (std::abs(curDelta - preDelta) > limit) {
 		printf("Rotation Error %d:%f %d:%f \n", idxPre1, preDelta, idxCur, curDelta);
-		curMotion.setErrType(Const::CErrType::LimitROT);
+		curMotion.errType.set(Const::Error::LimitROT);
 		return false;
 	}
 
@@ -486,7 +489,7 @@ bool TrackRunner::limitScaleDiff(MotionState& curMotion, double& curScale, doubl
 
 	//if (std::abs(curDelta - 1.0f) > limit) {
 	if (std::abs(curDelta ) > 1.2f* limit) {
-		curMotion.setErrType(Const::CErrType::LimitSCALEDIFF);
+		curMotion.errType.set(Const::Error::LimitSCALEDIFF);
 		if (std::abs(curDelta) > limit)
 		printf("Scale Error %d-%d:%f %f    %d-%d:%f %f\n", 
 			idxPre2, idxPre1, preMotion1.getScale()*(idxPre1 - idxPre2), 1.65f / preMotion1.getScale() / (idxPre1 - idxPre2), 

@@ -13,7 +13,7 @@ public:
 	MotionState();
 	~MotionState();
 protected:
-	Const::CErrType errType;
+	
 
 	int idxImg[2]; /** \var 前后对比两张图片的编号 */
 	bool inited; /** \var 是否初始化 */
@@ -30,15 +30,7 @@ public:
 	
 
 	/** Getter/Setter方法 */
-	int getErrType() const { return (int)errType;
-
-	}
-	void setErrType(int val) { errType = (Const::CErrType)(val == 0 ? 0 : (val | errType));
-	printf("///////////////////\n");
-	printf("setErrType= :%d\n",errType);
-	printf("///////////////////\n");
-	}
-	void setErrType(Const::CErrType val) { setErrType((int)val); }
+	Const::Error errType;
 
 	int getIdxImg(int idx) const { return idxImg[idx]; }
 	int& setIdxImg(int idx, int val) { return idxImg[idx] = val; }
