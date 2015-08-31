@@ -85,7 +85,7 @@ bool Utils::loadCommandLine(int argc, char* argv[]) {
 	CFG_bIsLimitRotationDiff	= Utils::configDefault<int>(0, fs["bIsLimitRotationDiff"]);
 	CFG_dScaleInvIncreaseDiffLimit = Utils::configDefault<double>(0.1f, fs["dScaleInvIncreaseDiffLimit"]);
 	CFG_mCameraParameter		= Utils::configDefault<cv::Mat>(Const::mat33_111.clone(), fs["mCameraParameter"]);
-	CFG_iDequeFrameNumber		= Utils::configDefault<int>(2, fs["iDequeFrameNumber"]);
+	CFG_iDequeFrameNumber		= Utils::configDefault<int>(1, fs["iDequeFrameNumber"]);
 	CFG_dOpticalFlowThreshold = Utils::configDefault<double>(2.0f, fs["dOpticalFlowThreshold"]);
 	CFG_bIsLogGlobal			= Utils::configDefault<int>(0, fs["bIsLogGlobal"]);
 	CFG_iPreAverageFilter = Utils::configDefault<int>(1, fs["iPreAverageFilter"]);

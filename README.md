@@ -56,5 +56,87 @@ and the default config file can be found in `'./vslam_config.xml'`.
 	**Usage**:	缓存特征预处理数据读取路径 `{idx:%d}` `{nfeature:%d}`  
 	**Default**:	`"./toPath/00/features_%d_%d.xml"`
 
-...working on...
+* `bool CFG_bIsUseCacheFeature`  
+	**Usage**:	是否使用本地预处理特征点    
+	**Default**:	`false`
+
+* `std::string CFG_sModeExecute`  
+	**Usage**:	程序执行模式 {track/feature}  
+	**Default**:	`track`
+
+* `bool CFG_bIsCacheCurrentFeature`  
+	**Usage**:	是否缓存当前运算特征  
+	**Default**:	`false`
+
+* `bool CFG_bIsLimitRotationDiff`  
+	**Usage**:	是否限制位移旋转角度增量  
+	**Default**:	`false`
+
+* `int CFG_iImageLoadBegin`  
+	**Usage**:	读取图像起始标号  
+	**Default**:	`0`
+
+* `int CFG_iImageLoadEnd`  
+	**Usage**:	读取图像结束标号  
+	**Default**:	`number of frames`
+
+* `int CFG_iMaxFeatures`  
+	**Usage**:	最大特征匹配数量,Sift前K个特征  
+	**Default**:	`2000`
+
+* `bool CFG_bIsNotConsiderAxisY`  
+	**Usage**:	是否忽略坐标绘制的Y(上下)轴  
+	**Default**:	`false`
+
+* `double CFG_dDrawFrameStep`  
+	**Usage**:	坐标绘制时单位长度(meter)的像素点长度  
+	**Default**:	`1.0`
+
+* `double CFG_dScaleRatioLimitBottom`  
+	**Usage**:	尺度变换限制下界  
+	**Default**:	`0.5`, 相当于运动距离最长为 `1.65f/0.5`
+
+* `double CFG_dScaleRatioLimitTop`  
+	**Usage**:	尺度变换限制上界  
+	**Default**:	`11.0`, 相当于运动距离最短为 `1.65f/11.0`
+
+* `double CFG_dScaleRatioErrorDefault`  
+	**Usage**:	 尺度变换异常的默认位移模长 
+	**Default**:	`0.5f`, 相当于运动距离为 `0.5`
+
+* `bool CFG_bIsUseGroundTruthDistance`  
+	**Usage**:	是否使用GroundTruth的位移模长  
+	**Default**:	`false`
+
+* `double CFG_dRotationDiffLimit`  
+	**Usage**:	位移旋转角度增量限制值(degree)  
+	**Default**:	`15.0f`
+
+* `double CFG_dScaleInvIncreaseDiffLimit`  
+	**Usage**:	位移(尺度倒数)增量限制  
+	**Default**:	`0.1f`
+
+* `cv::Mat CFG_mCameraParameter`  
+	**Usage**:	相机内参数矩阵  
+	**Default**:	`""`
+
+* `int CFG_iDequeFrameNumber`  
+	**Usage**:  历史队列中的帧数限制	  
+	**Default**:	`1`
+
+* `double CFG_dOpticalFlowThreshold`  
+	**Usage**:	光流过滤阈值  
+	**Default**:	`2.0`
+
+* `bool CFG_bIsLogGlobal`  
+	**Usage**:	全局log开启/关闭  
+	**Default**:	`false`
+
+* `int CFG_iPreAverageFilter`  
+	**Usage**:	前向均值滤波的帧数  
+	**Default**:	`0`
+
+* `std::string CFG_sDataName`  
+	**Usage**:	数据集名称  
+	**Default**:	`"00"`
 

@@ -113,12 +113,10 @@ int TrackRunner::runKeyStep() {
 			if (motionStatus == false) {
 				printf("运动参数计算失败\n");
 				//TODO: 解不出来默认 运动,然后 强制一个默认尺度
-				if (idxImgCur > 500 && idxImgCur < 600) {
-					vecCurMotions[idx].setInited(true);
-					//按照CFG设置
-					vecCurMotions[idx].setScale(1.65f / CFG_dScaleRatioErrorDefault, true);
-					vecCurMotions[idx].errType.set(0);
-				}
+				vecCurMotions[idx].setInited(true);
+				//按照CFG设置
+				vecCurMotions[idx].setScale(1.65f / CFG_dScaleRatioErrorDefault, true);
+				vecCurMotions[idx].errType.set(0);
 				continue;
 			}
 
