@@ -139,4 +139,3 @@ and the default config file can be found in `'./vslam_config.xml'`.
 * `std::string CFG_sDataName`  
 	**Usage**:	数据集名称  
 	**Default**:	`"00"`
-

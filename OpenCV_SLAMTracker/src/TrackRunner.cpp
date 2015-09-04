@@ -113,10 +113,11 @@ int TrackRunner::runKeyStep() {
 			if (motionStatus == false) {
 				printf("运动参数计算失败\n");
 				//TODO: 解不出来默认 运动,然后 强制一个默认尺度
-				vecCurMotions[idx].setInited(true);
-				//按照CFG设置
-				vecCurMotions[idx].setScale(1.65f / CFG_dScaleRatioErrorDefault, true);
-				vecCurMotions[idx].errType.set(0);
+				// 以上这句话只能用在 iDequeNumber == 1的时候，否则会有问题
+				//vecCurMotions[idx].setInited(true);
+				////按照CFG设置
+				//vecCurMotions[idx].setScale(1.65f / CFG_dScaleRatioErrorDefault, true);
+				//vecCurMotions[idx].errType.set(0);
 				continue;
 			}
 
@@ -158,8 +159,9 @@ int TrackRunner::runKeyStep() {
 				}
 				aver += 1.65f / curScale / idxDelta;
 				aver /= cnt + 1;
+				//可以做限制 只限制上升或者只限制下降
 				//if (aver < 1.65f / curScale / idxDelta) {
-					curScale = 1.65 / aver / idxDelta;
+				//	curScale = 1.65 / aver / idxDelta;
 				//}
 			}
 

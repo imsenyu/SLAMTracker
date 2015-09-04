@@ -47,8 +47,6 @@ double Utils::getRodriguesRotation(cv::Mat _rtDir, cv::Mat& matRotation, cv::Mat
 	return std::acos(thetaInR)*180.0f / std::acos(-1) * (rtDir.at<double>(0,0) >0 ? 1.0f : -1.0f );
 }
 
-
-
 #define CFG_EXISTS(str) (Utils::isCmdOptionExists(argv, argv + argc, str))
 #define CFG_GET(str) (Utils::getCmdOption(argv, argv + argc, str))
 

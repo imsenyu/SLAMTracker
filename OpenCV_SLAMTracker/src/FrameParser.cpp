@@ -280,30 +280,31 @@ bool FrameParser::computeMotion(MotionState& motion, int minFundamentMatches) {
 			}
 
 			//原则上来说应该使用三角测量来选择,但似乎效果并不好
-			int preSelect = selectDirectionIdx;
-			if (true){
-				// 三角测量
-				ScaleEstimator sEstimator;
-				motion.setMatT(matT[0].clone());
-				int num_inlier = 0;
-				
-				for (int i = 0; i < 2; i++) {
-					motion.setMatR(matR[i].clone());
-					sEstimator.updateMotion(&motion);
-					int num = sEstimator.triangulate();
-					if (num > num_inlier) {
-						selectDirectionIdx = i;
-						num_inlier = num;
-					}
-					//if (CFG_bIsLogGlobal)
-					printf("[%d]=%d\n", i, num);
-				}		
-			}
-			if (preSelect != selectDirectionIdx) {
+			// 已验证，有问题。。。
+			//int preSelect = selectDirectionIdx;
+			//if (true){
+			//	// 三角测量
+			//	ScaleEstimator sEstimator;
+			//	motion.setMatT(matT[0].clone());
+			//	int num_inlier = 0;
+			//	
+			//	for (int i = 0; i < 2; i++) {
+			//		motion.setMatR(matR[i].clone());
+			//		sEstimator.updateMotion(&motion);
+			//		int num = sEstimator.triangulate();
+			//		if (num > num_inlier) {
+			//			selectDirectionIdx = i;
+			//			num_inlier = num;
+			//		}
+			//		//if (CFG_bIsLogGlobal)
+			//		printf("[%d]=%d\n", i, num);
+			//	}		
+			//}
+			//if (preSelect != selectDirectionIdx) {
 
-				printf("preSel=%d sel=%d\n", preSelect, selectDirectionIdx);
-				//printf("%f %f\n%d %d\n",)
-			}
+			//	printf("preSel=%d sel=%d\n", preSelect, selectDirectionIdx);
+			//	//printf("%f %f\n%d %d\n",)
+			//}
 			if (CFG_bIsLogGlobal)
 			printf("selectDirectionIdx=%d\n", selectDirectionIdx);
 			motion.setMatR(matR[selectDirectionIdx].clone());
