@@ -139,3 +139,12 @@ and the default config file can be found in `'./vslam_config.xml'`.
 * `std::string CFG_sDataName`  
 	**Usage**:	数据集名称  
 	**Default**:	`"00"`
+
+### Result View
+
+report are in `./Report/` and the 2 directories mean:
+
+1. `ComputedScale`  
+	the plot using the **rotation** by my computation and the moving **distance** by my computation
+2. `GroundTruthScale`  
+	the plot using the **rotation** by my computation and the moving **distance** by ground truth (GPS coords)
